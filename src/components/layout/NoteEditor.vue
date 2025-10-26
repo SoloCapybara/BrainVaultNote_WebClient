@@ -1,43 +1,61 @@
 <template>
   <div class="note-editor">
     <div class="editor-header">
-      <input 
-        type="text" 
-        class="editor-title" 
-        v-model="noteTitle"
-        placeholder="笔记标题"
-        @input="handleTitleChange"
-      >
+      <div class="title-wrapper">
+        <input 
+          type="text" 
+          class="editor-title" 
+          v-model="noteTitle"
+          placeholder="笔记标题"
+          @input="handleTitleChange"
+        >
+        <div class="title-word-count">
+          标题字数: {{ titleWordCount }}
+        </div>
+      </div>
     </div>
     
     <div class="editor-toolbar">
-      <button class="toolbar-btn" @click="formatText('bold')" title="粗体">
-        <i class="fas fa-bold"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('italic')" title="斜体">
-        <i class="fas fa-italic"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('underline')" title="下划线">
-        <i class="fas fa-underline"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('list')" title="无序列表">
-        <i class="fas fa-list-ul"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('orderedList')" title="有序列表">
-        <i class="fas fa-list-ol"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('link')" title="链接">
-        <i class="fas fa-link"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('image')" title="图片">
-        <i class="fas fa-image"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('code')" title="代码">
-        <i class="fas fa-code"></i>
-      </button>
-      <button class="toolbar-btn" @click="formatText('table')" title="表格">
-        <i class="fas fa-table"></i>
-      </button>
+      <div class="toolbar-left">
+        <button class="toolbar-btn" @click="formatText('bold')" title="粗体">
+          <i class="fas fa-bold"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('italic')" title="斜体">
+          <i class="fas fa-italic"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('underline')" title="下划线">
+          <i class="fas fa-underline"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('list')" title="无序列表">
+          <i class="fas fa-list-ul"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('orderedList')" title="有序列表">
+          <i class="fas fa-list-ol"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('link')" title="链接">
+          <i class="fas fa-link"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('image')" title="图片">
+          <i class="fas fa-image"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('code')" title="代码">
+          <i class="fas fa-code"></i>
+        </button>
+        <button class="toolbar-btn" @click="formatText('table')" title="表格">
+          <i class="fas fa-table"></i>
+        </button>
+      </div>
+      <div class="content-word-count">
+        <div class="word-count-item">
+          内容字数: {{ contentWordCount }}
+        </div>
+        <div class="word-count-item">
+          标点: {{ contentPunctuationCount }}
+        </div>
+        <div class="word-count-item">
+          共{{ contentLineCount }}行
+        </div>
+      </div>
     </div>
     
     <div class="editor-content-wrapper">
@@ -46,6 +64,7 @@
         v-model="noteContent"
         placeholder="开始输入笔记内容..."
         @input="handleContentChange"
+        @keydown="handleKeyDown"
         ref="editorTextarea"
       ></textarea>
     </div>
@@ -53,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue'
 
 // Props
 const props = defineProps<{
@@ -79,6 +98,132 @@ const currentNote = computed(() => ({
   wordCount: noteContent.value.length
 }))
 
+// 字数统计
+const titleWordCount = computed(() => {
+  return getWordCount(noteTitle.value)
+})
+
+// 计算纯文字数量（不包括标点符号和空格）
+const getWordCount = (text: string) => {
+  // 移除所有标点符号、数字、空格，只保留中英文字符
+  const cleanText = text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, '')
+  return cleanText.length
+}
+
+// 计算标点符号数量
+const getPunctuationCount = (text: string) => {
+  // 只保留标点符号、数字、空格等非中英文字符
+  const punctuationText = text.replace(/[\u4e00-\u9fa5a-zA-Z]/g, '')
+  return punctuationText.length
+}
+
+const contentWordCount = computed(() => {
+  return getWordCount(noteContent.value)
+})
+
+const contentPunctuationCount = computed(() => {
+  return getPunctuationCount(noteContent.value)
+})
+
+// 总字符数（包括标点符号）
+const contentCharCount = computed(() => {
+  return noteContent.value.length
+})
+
+const contentLineCount = ref(1)
+
+// 防抖函数
+const debounce = (func: Function, delay: number) => {
+  let timeoutId: NodeJS.Timeout
+  return (...args: any[]) => {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => func.apply(null, args), delay)
+  }
+}
+
+// 计算实际行数的函数 - 使用实际文本换行方法
+const calculateLineCount = () => {
+  if (!editorTextarea.value) return
+  
+  const textarea = editorTextarea.value
+  const text = noteContent.value
+  
+  if (!text.trim()) {
+    contentLineCount.value = 1
+    return
+  }
+  
+  try {
+    // 创建一个临时的textarea来精确模拟换行行为
+    const tempTextarea = document.createElement('textarea')
+    const computedStyle = getComputedStyle(textarea)
+    
+    // 复制所有影响文本布局的样式
+    const styleProps = [
+      'fontSize', 'fontFamily', 'fontWeight', 'lineHeight', 'letterSpacing',
+      'wordSpacing', 'textIndent', 'padding', 'border', 'boxSizing',
+      'whiteSpace', 'wordWrap', 'wordBreak', 'overflowWrap', 'width',
+      'resize', 'overflow', 'textAlign', 'direction'
+    ]
+    
+    styleProps.forEach(prop => {
+      tempTextarea.style[prop as any] = computedStyle[prop as any]
+    })
+    
+    // 设置位置和可见性
+    tempTextarea.style.position = 'absolute'
+    tempTextarea.style.visibility = 'hidden'
+    tempTextarea.style.height = 'auto'
+    tempTextarea.style.top = '-9999px'
+    tempTextarea.style.left = '-9999px'
+    tempTextarea.style.overflow = 'hidden'
+    tempTextarea.style.resize = 'none'
+    
+    // 设置文本内容
+    tempTextarea.value = text
+    
+    // 添加到DOM中
+    document.body.appendChild(tempTextarea)
+    
+    // 获取行高
+    const lineHeight = parseFloat(computedStyle.lineHeight) || parseFloat(computedStyle.fontSize) * 1.2
+    
+    // 计算实际行数 - 使用scrollHeight更准确
+    const scrollHeight = tempTextarea.scrollHeight
+    const paddingTop = parseFloat(computedStyle.paddingTop) || 0
+    const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0
+    const borderTop = parseFloat(computedStyle.borderTopWidth) || 0
+    const borderBottom = parseFloat(computedStyle.borderBottomWidth) || 0
+    
+    const contentHeight = scrollHeight - paddingTop - paddingBottom - borderTop - borderBottom
+    const calculatedLines = Math.max(1, Math.round(contentHeight / lineHeight))
+    
+    console.log('实际文本换行方法计算行数:', {
+      textLength: text.length,
+      textPreview: text.substring(0, 50) + '...',
+      lineHeight: lineHeight,
+      scrollHeight: scrollHeight,
+      contentHeight: contentHeight,
+      calculatedLines: calculatedLines,
+      textareaWidth: textarea.clientWidth,
+      tempTextareaWidth: tempTextarea.clientWidth
+    })
+    
+    contentLineCount.value = calculatedLines
+    
+    // 清理临时元素
+    document.body.removeChild(tempTextarea)
+    
+  } catch (error) {
+    console.error('行数计算错误:', error)
+    // 如果计算失败，使用简单的换行符计算
+    contentLineCount.value = Math.max(1, text.split('\n').length)
+  }
+}
+
+// 创建防抖版本的计算函数
+const debouncedCalculateLineCount = debounce(calculateLineCount, 100)
+
 // 监听props变化
 watch(() => props.note, (newNote) => {
   if (newNote) {
@@ -87,6 +232,47 @@ watch(() => props.note, (newNote) => {
   }
 }, { immediate: true })
 
+// 监听内容变化，重新计算行数
+watch(() => noteContent.value, () => {
+  nextTick(() => {
+    debouncedCalculateLineCount()
+  })
+})
+
+// 监听窗口大小变化，重新计算行数
+const handleResize = () => {
+  debouncedCalculateLineCount()
+}
+
+// 使用 ResizeObserver 监听编辑区域宽度变化
+let resizeObserver: ResizeObserver | null = null
+
+// 组件挂载后添加监听器
+onMounted(() => {
+  // 监听窗口大小变化
+  window.addEventListener('resize', handleResize)
+  
+  // 使用 ResizeObserver 监听编辑区域宽度变化
+  if (editorTextarea.value) {
+    resizeObserver = new ResizeObserver(() => {
+      debouncedCalculateLineCount()
+    })
+    resizeObserver.observe(editorTextarea.value)
+  }
+  
+  nextTick(() => {
+    calculateLineCount()
+  })
+})
+
+// 组件卸载前移除监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
+
 // 方法
 const handleTitleChange = () => {
   emit('update', currentNote.value)
@@ -94,6 +280,36 @@ const handleTitleChange = () => {
 
 const handleContentChange = () => {
   emit('update', currentNote.value)
+}
+
+// 处理键盘事件，支持Tab键输入
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Tab') {
+    event.preventDefault() // 阻止默认的Tab行为（切换焦点）
+    
+    if (!editorTextarea.value) return
+    
+    const textarea = editorTextarea.value
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    
+    // 插入Tab字符
+    const tabChar = '  ' // 使用两个空格作为Tab
+    const newText = noteContent.value.substring(0, start) + tabChar + noteContent.value.substring(end)
+    
+    // 更新内容
+    noteContent.value = newText
+    
+    // 设置新的光标位置
+    setTimeout(() => {
+      const newCursorPos = start + tabChar.length
+      textarea.setSelectionRange(newCursorPos, newCursorPos)
+      textarea.focus()
+    }, 0)
+    
+    // 触发更新
+    emit('update', currentNote.value)
+  }
 }
 
 const formatText = (format: string) => {
@@ -195,8 +411,33 @@ body.dark .editor-content {
   margin-bottom: 20px;
 }
 
-.editor-title {
+.title-wrapper {
+  display: flex;
+  align-items: center;
   width: 100%;
+  gap: 15px;
+}
+
+.title-word-count {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+body.dark .title-word-count {
+  background-color: #2a2a2a;
+  color: var(--color-text-secondary);
+}
+
+.editor-title {
+  flex: 1;
   border: none;
   font-size: 24px;
   font-weight: 700;
@@ -219,11 +460,54 @@ body.dark .editor-title {
 
 .editor-toolbar {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid var(--color-border);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.toolbar-left {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.content-word-count {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.word-count-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background-color: var(--color-bg-secondary);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.word-count-item:hover {
+  background-color: var(--primary-color);
+  color: white;
+  transform: translateY(-1px);
+}
+
+body.dark .word-count-item {
+  background-color: #2a2a2a;
+  color: var(--color-text-secondary);
+}
+
+body.dark .word-count-item:hover {
+  background-color: var(--primary-color);
+  color: white;
 }
 
 body.dark .editor-toolbar {
@@ -307,6 +591,13 @@ body.dark .editor-content::placeholder {
   }
   
   .editor-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .toolbar-left {
+    justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
   }
@@ -314,6 +605,26 @@ body.dark .editor-content::placeholder {
   .toolbar-btn {
     padding: 6px 10px;
     font-size: 14px;
+  }
+  
+  .content-word-count {
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .word-count-item {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  
+  .title-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .title-word-count {
+    align-self: flex-end;
   }
 }
 </style>
