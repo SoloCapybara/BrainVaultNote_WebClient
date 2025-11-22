@@ -121,6 +121,9 @@ const getRelativeDate = (date: string) => {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  overflow: visible;
+  box-sizing: border-box;
+  position: relative;
 }
 
 /* 防止所有子元素文字被选中 */
@@ -224,6 +227,7 @@ body.dark .tag.ai-tag {
   gap: 10px;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px 20px 5px 20px;
   min-height: 0; /* 确保可以收缩 */
 }
@@ -350,6 +354,30 @@ body.dark .tag.ai-tag {
 }
 
 /* 响应式设计 */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .notes-list {
+    width: 280px;
+    max-height: calc(100vh - 60px); /* 减去TopBar的固定高度 */
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .notes-container {
+    padding-bottom: 8px;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .notes-header {
+    padding: 8px 15px 5px 15px;
+    flex-shrink: 0;
+  }
+}
+
 @media (max-width: 1024px) {
   .notes-list {
     width: 280px;
@@ -361,10 +389,28 @@ body.dark .tag.ai-tag {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid var(--color-border);
+    max-height: calc(100vh - 70px); /* 减去TopBar的高度 */
+    height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
   
   body.dark .notes-list {
     border-bottom-color: #3a4152;
+  }
+
+  .notes-container {
+    padding-bottom: 8px;
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .notes-header {
+    padding: 8px 15px 5px 15px;
+    flex-shrink: 0;
   }
 }
 </style>

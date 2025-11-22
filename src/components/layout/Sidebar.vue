@@ -1993,14 +1993,45 @@ body.dark .color-option-modal.disabled {
     height: 100%;
     transform: translateX(-100%);
     z-index: 200;
+    width: 280px !important; /* 移动端固定宽度，覆盖collapsed状态 */
   }
   
+  /* mobile-open时显示侧边栏，无论collapsed状态如何 */
   .sidebar.mobile-open {
     transform: translateX(0);
   }
   
-  .sidebar.collapsed {
-    width: 280px;
+  /* 移动端打开时，忽略collapsed状态，始终显示完整布局 */
+  .sidebar.mobile-open.collapsed {
+    width: 280px !important;
+  }
+  
+  .sidebar.mobile-open.collapsed .logo h1,
+  .sidebar.mobile-open.collapsed .nav-title,
+  .sidebar.mobile-open.collapsed .nav-item span,
+  .sidebar.mobile-open.collapsed .ai-tag,
+  .sidebar.mobile-open.collapsed .search-box,
+  .sidebar.mobile-open.collapsed .color-picker {
+    display: block !important;
+  }
+  
+  .sidebar.mobile-open.collapsed .nav-item {
+    justify-content: flex-start !important;
+    padding: 12px 20px !important;
+  }
+  
+  .sidebar.mobile-open.collapsed .nav-item i {
+    margin-right: 12px !important;
+    font-size: 18px !important;
+  }
+  
+  .sidebar.mobile-open.collapsed .logo {
+    padding: 0 20px 20px !important;
+    justify-content: space-between !important;
+  }
+  
+  .sidebar.mobile-open.collapsed .logo-content {
+    display: flex !important;
   }
   
   /* 移动端搜索按钮优化 */

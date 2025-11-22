@@ -289,14 +289,142 @@ input:checked + .slider:before {
   transform: translateX(26px);
 }
 
+/* 中屏模式适配 */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .top-bar {
+    padding: 10px 15px;
+    min-height: 60px;
+    max-height: 60px;
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .user-info {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 14px;
+  }
+
+  .welcome-text {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .notification-text {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .top-actions {
+    flex-shrink: 0;
+    gap: 10px;
+  }
+
+  .action-btn {
+    font-size: 16px;
+    padding: 6px;
+  }
+
+  .theme-toggle span {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
+  .top-bar {
+    padding: 10px 15px;
+    min-height: 50px;
+    max-height: 70px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
   .mobile-menu-btn {
     display: block;
+    margin-right: 10px;
+    font-size: 18px;
   }
   
   .theme-toggle span {
     display: none;
+  }
+
+  .user-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .user-details {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .welcome-text {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .notification-text {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+
+  .top-actions {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    padding: 6px;
+    font-size: 16px;
+  }
+
+  .switch {
+    width: 40px;
+    height: 20px;
+  }
+
+  .slider:before {
+    height: 14px;
+    width: 14px;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(20px);
   }
 }
 </style>

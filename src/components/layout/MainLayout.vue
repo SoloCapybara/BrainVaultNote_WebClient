@@ -622,11 +622,28 @@ const notes = ref([
 
 // 方法
 const toggleSidebar = () => {
+  // 在移动端，如果侧边栏是打开的，点击收回按钮应该关闭侧边栏
+  if (window.innerWidth <= 768 && showMobileSidebar.value) {
+    showMobileSidebar.value = false
+    // 关闭时保持展开状态（collapsed = false），这样箭头会正确显示
+    sidebarCollapsed.value = false
+    saveSidebarState()
+    return
+  }
+  // 桌面端正常切换collapsed状态
   sidebarCollapsed.value = !sidebarCollapsed.value
   saveSidebarState()
 }
 
 const toggleMobileSidebar = () => {
+  // 在移动端打开侧边栏时，确保始终是展开状态（collapsed = false）
+  if (window.innerWidth <= 768) {
+    if (!showMobileSidebar.value) {
+      // 打开侧边栏时，确保collapsed为false，箭头显示为左箭头
+      sidebarCollapsed.value = false
+      saveSidebarState()
+    }
+  }
   showMobileSidebar.value = !showMobileSidebar.value
 }
 
