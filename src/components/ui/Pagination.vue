@@ -225,7 +225,7 @@ watch(() => props.currentPage, (newPage) => {
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto auto auto;
   align-items: center;
-  padding: 15px 20px 20px 20px;
+  padding: 15px 20px 12px 20px; /* 减少底部 padding，从 20px 改为 12px */
   background-color: var(--color-bg-primary);
   border-top: 1px solid var(--color-border);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -269,7 +269,7 @@ body.dark .pagination-container {
 .custom-select {
   position: relative;
   min-width: 60px;
-  z-index: 51;
+  z-index: 10001; /* 提高层级，确保下拉菜单在笔记列表之上 */
 }
 
 .select-display {
@@ -312,7 +312,7 @@ body.dark .pagination-container {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 50;
+  z-index: 10001; /* 提高层级，确保在笔记列表和分页组件之上 */
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
@@ -377,8 +377,9 @@ body.dark .select-option {
   grid-column: 1 / -1;
   grid-row: 3;
   text-align: center;
-  padding: 8px 20px 0 20px;
+  padding: 4px 20px 0 20px; /* 减少顶部 padding，从 8px 改为 4px */
   display: block;
+  margin-top: -4px; /* 向上移动 4px */
 }
 
 body.dark .pagination-info {
@@ -792,6 +793,7 @@ body.dark .jump-btn.increase:hover {
     z-index: 10;
     flex-shrink: 0;
     background-color: var(--color-bg-primary);
+    overflow: visible !important; /* 确保下拉菜单不被裁剪 */
   }
 
   .page-size-selector,
@@ -823,6 +825,30 @@ body.dark .jump-btn.increase:hover {
   .page-size-selector {
     order: 1;
     margin-bottom: 0;
+  }
+  
+  /* 窄屏模式下确保下拉菜单层级足够高且不被裁剪 */
+  .pagination-container {
+    overflow: visible !important; /* 允许下拉菜单溢出 */
+  }
+  
+  .custom-select {
+    z-index: 10001 !important;
+    position: relative !important;
+  }
+  
+  .select-options {
+    z-index: 10002 !important;
+    position: absolute !important;
+    bottom: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    overflow: visible !important;
+  }
+  
+  .page-size-selector {
+    overflow: visible !important;
   }
 
   .page-jumper {

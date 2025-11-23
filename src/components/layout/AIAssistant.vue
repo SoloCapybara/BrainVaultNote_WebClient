@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-assistant">
+  <div class="ai-assistant" :class="{ collapsed: collapsed }">
     <!-- 统计卡片 -->
     <div class="stats-card">
       <h3><i class="fas fa-chart-line"></i> 笔记统计</h3>
@@ -79,6 +79,7 @@ import { ref } from 'vue'
 // Props
 defineProps<{
   note: any
+  collapsed?: boolean
 }>()
 
 // Emits
@@ -87,6 +88,7 @@ const emit = defineEmits<{
   'generate-summary': []
   'generate-tags': []
   'find-related': []
+  'toggle-collapse': []
 }>()
 
 // 响应式状态
@@ -133,6 +135,24 @@ const addTag = (tag: string) => {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* 折叠状态 */
+.ai-assistant.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  border-left: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.ai-assistant.collapsed > * {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* 防止所有子元素文字被选中 */

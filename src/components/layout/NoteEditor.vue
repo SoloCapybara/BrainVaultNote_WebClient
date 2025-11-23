@@ -374,9 +374,11 @@ const formatText = (format: string) => {
   flex-direction: column;
   background-color: #ffffff;
   padding: 30px;
-  overflow-y: auto;
+  padding-right: 30px; /* 确保右侧padding一致 */
+  overflow: hidden;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   min-width: 0;
+  box-sizing: border-box; /* 确保padding包含在宽度内 */
 }
 
 body.dark .note-editor {
@@ -416,6 +418,7 @@ body.dark .editor-content {
   align-items: center;
   width: 100%;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .title-word-count {
@@ -461,24 +464,29 @@ body.dark .editor-title {
 .editor-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid var(--color-border);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex-wrap: wrap;
 }
 
 .toolbar-left {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .content-word-count {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .word-count-item {
@@ -544,7 +552,9 @@ body.dark .toolbar-btn:hover {
   flex: 1;
   position: relative;
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  overflow-x: hidden;
+  min-height: 0;
+  padding-right: 0; /* 确保右侧没有额外padding */
 }
 
 .editor-content {
@@ -554,13 +564,16 @@ body.dark .toolbar-btn:hover {
   font-size: 16px;
   line-height: 1.7;
   padding: 10px 0;
+  padding-right: 0; /* 确保右侧padding为0，避免对齐问题 */
   resize: none;
-  min-height: 400px;
   background: transparent;
   color: var(--dark-color);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  overflow-y: auto;
+  overflow: visible;
+  display: block;
+  box-sizing: border-box;
+  text-align: left; /* 明确左对齐 */
 }
 
 body.dark .editor-content {
@@ -581,6 +594,49 @@ body.dark .editor-content::placeholder {
 }
 
 /* 响应式设计 */
+/* 中等屏幕适配 - 当宽度变小时 */
+@media (max-width: 1400px) {
+  .title-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .editor-title {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .title-word-count {
+    align-self: flex-start;
+  }
+
+  .editor-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .content-word-count {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    order: 1;
+  }
+
+  .word-count-item {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .toolbar-left {
+    order: 2;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 768px) {
   .note-editor {
     padding: 20px;
@@ -610,11 +666,14 @@ body.dark .editor-content::placeholder {
   .content-word-count {
     justify-content: center;
     gap: 8px;
+    flex-direction: row;
   }
   
   .word-count-item {
     padding: 4px 8px;
     font-size: 11px;
+    width: auto;
+    justify-content: center;
   }
   
   .title-wrapper {
@@ -622,9 +681,14 @@ body.dark .editor-content::placeholder {
     align-items: flex-start;
     gap: 8px;
   }
-  
+
+  .editor-title {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
   .title-word-count {
-    align-self: flex-end;
+    align-self: flex-start;
   }
 }
 </style>

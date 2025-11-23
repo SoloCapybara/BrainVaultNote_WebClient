@@ -1,5 +1,5 @@
 <template>
-  <div class="notes-list">
+  <div class="notes-list" :class="{ collapsed: collapsed }">
     <div class="notes-header">
       <h2>我的笔记</h2>
       <button class="new-note-btn" @click="$emit('new-note')">
@@ -58,12 +58,14 @@ import Pagination from '../ui/Pagination.vue'
 const props = defineProps<{
   notes: any[]
   activeNote: any
+  collapsed?: boolean
 }>()
 
 // Emits
 const emit = defineEmits<{
   'select-note': [note: any]
   'new-note': []
+  'toggle-collapse': []
 }>()
 
 // 分页状态
@@ -124,6 +126,24 @@ const getRelativeDate = (date: string) => {
   overflow: visible;
   box-sizing: border-box;
   position: relative;
+  z-index: 1; /* Ensure notes-list has a z-index for dropdowns */
+}
+
+/* 折叠状态 */
+.notes-list.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  border-right: none;
+  overflow: hidden;
+}
+
+.notes-list.collapsed .notes-header,
+.notes-list.collapsed .notes-container,
+.notes-list.collapsed :deep(.pagination-container) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* 防止所有子元素文字被选中 */
@@ -230,6 +250,25 @@ body.dark .tag.ai-tag {
   overflow-x: hidden;
   padding: 10px 20px 5px 20px;
   min-height: 0; /* 确保可以收缩 */
+}
+
+/* 确保分页组件固定在底部并可见 */
+.notes-list :deep(.pagination-container) {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 10px 20px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-primary);
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 10;
+}
+
+body.dark .notes-list :deep(.pagination-container) {
+  border-top-color: var(--color-border);
+  background-color: var(--color-bg-primary);
 }
 
 .note-item {
@@ -356,12 +395,19 @@ body.dark .tag.ai-tag {
 /* 响应式设计 */
 @media (max-width: 1024px) and (min-width: 769px) {
   .notes-list {
-    width: 280px;
+    width: 340px;
+    max-width: 340px;
     max-height: calc(100vh - 60px); /* 减去TopBar的固定高度 */
     height: calc(100vh - 60px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+  
+  .notes-list.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
   }
 
   .notes-container {
@@ -380,37 +426,134 @@ body.dark .tag.ai-tag {
 
 @media (max-width: 1024px) {
   .notes-list {
-    width: 280px;
+    width: 340px;
+    max-width: 340px;
   }
 }
 
+/* 宽屏模式下也使用340px宽度，与中屏保持一致 */
+@media (min-width: 1025px) {
+  .notes-list {
+    width: 340px;
+    max-width: 340px;
+    min-width: 340px;
+  }
+  
+  .notes-list.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+  }
+}
+
+
 @media (max-width: 768px) {
   .notes-list {
-    width: 100%;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
     border-right: none;
-    border-bottom: 1px solid var(--color-border);
-    max-height: calc(100vh - 70px); /* 减去TopBar的高度 */
-    height: calc(100vh - 70px);
+    border-bottom: none;
+    max-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible; /* 改为 visible，允许下拉菜单溢出 */
+    position: relative;
   }
   
   body.dark .notes-list {
-    border-bottom-color: #3a4152;
+    border-bottom: none;
   }
 
   .notes-container {
-    padding-bottom: 8px;
+    padding-bottom: 180px; /* 增加底部空间，确保最后一条笔记完全可见，不被分页组件遮挡 */
     min-height: 0;
     flex: 1;
-    overflow-y: auto;
+    overflow-y: auto !important; /* 强制显示滚动条 */
     overflow-x: hidden;
+    /* 确保滚动条可见 - 使用与中屏和宽屏一致的颜色 */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  
+  .notes-container::-webkit-scrollbar {
+    width: 6px !important;
+    display: block !important;
+  }
+  
+  .notes-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .notes-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 3px;
+  }
+  
+  .notes-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
+  }
+  
+  /* 深色模式滚动条 - 与全局样式保持一致 */
+  body.dark .notes-container {
+    scrollbar-color: #475569 transparent;
+  }
+  
+  body.dark .notes-container::-webkit-scrollbar-thumb {
+    background: #475569 !important;
+  }
+  
+  body.dark .notes-container::-webkit-scrollbar-thumb:hover {
+    background: #64748b !important;
   }
 
   .notes-header {
     padding: 8px 15px 5px 15px;
     flex-shrink: 0;
+  }
+  
+  /* 窄屏模式下分页组件固定在浏览器底部 */
+  .notes-list :deep(.pagination-container) {
+    padding: 10px 15px;
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    margin-top: 0 !important;
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-bg-primary);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    overflow: visible !important; /* 允许下拉菜单溢出 */
+  }
+  
+  /* 确保下拉菜单在窄屏模式下可见且不被遮挡 */
+  .notes-list :deep(.custom-select) {
+    overflow: visible !important;
+    position: relative !important;
+  }
+  
+  .notes-list :deep(.select-options) {
+    z-index: 10002 !important;
+    position: absolute !important;
+    pointer-events: auto !important;
+  }
+  
+  /* 确保笔记容器不会遮挡下拉菜单 */
+  .notes-container {
+    z-index: 1;
+    position: relative;
+  }
+  
+  body.dark .notes-list :deep(.pagination-container) {
+    border-top-color: var(--color-border);
+    background-color: var(--color-bg-primary);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
   }
 }
 </style>

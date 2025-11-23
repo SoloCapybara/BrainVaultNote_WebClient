@@ -106,6 +106,10 @@ defineEmits<{
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  min-height: 60px; /* 固定最小高度 */
+  max-height: 60px; /* 固定最大高度 */
+  flex-wrap: nowrap; /* 防止换行 */
+  overflow: hidden; /* 隐藏溢出内容 */
 }
 
 /* 防止所有子元素文字被选中 */
@@ -145,6 +149,9 @@ body.dark .theme-toggle span {
 .user-info {
   display: flex;
   align-items: center;
+  flex-shrink: 1; /* 允许收缩 */
+  min-width: 0; /* 允许缩小到0 */
+  overflow: hidden; /* 隐藏溢出内容 */
 }
 
 .mobile-menu-btn {
@@ -179,12 +186,18 @@ body.dark .mobile-menu-btn {
 .user-details {
   display: flex;
   flex-direction: column;
+  min-width: 0; /* 允许缩小到0 */
+  overflow: hidden; /* 隐藏溢出内容 */
 }
 
 .welcome-text {
   font-weight: 500;
   color: #212529;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  white-space: nowrap; /* 防止换行 */
+  overflow: hidden; /* 隐藏溢出内容 */
+  text-overflow: ellipsis; /* 超出部分显示省略号 */
+  line-height: 1.2; /* 固定行高 */
 }
 
 body.dark .welcome-text {
@@ -195,6 +208,10 @@ body.dark .welcome-text {
   font-size: 14px;
   color: #6c757d;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  white-space: nowrap; /* 防止换行 */
+  overflow: hidden; /* 隐藏溢出内容 */
+  text-overflow: ellipsis; /* 超出部分显示省略号 */
+  line-height: 1.2; /* 固定行高 */
 }
 
 body.dark .notification-text {
@@ -214,7 +231,16 @@ body.dark .notification-text {
   color: #212529;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  padding: 8px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 6px;
 }
 

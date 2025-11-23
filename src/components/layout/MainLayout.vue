@@ -17,6 +17,7 @@
       @search="handleSearch"
       @change-theme-color="handleChangeThemeColor"
       @toggle-theme="toggleGlobalTheme"
+      @close-mobile-sidebar="closeMobileSidebar"
     />
     
     <!-- 主内容区 -->
@@ -38,9 +39,21 @@
         <NotesList 
           :notes="notes"
           :active-note="activeNote"
+          :collapsed="notesListCollapsed"
           @select-note="selectNote"
           @new-note="createNewNote"
+          @toggle-collapse="notesListCollapsed = !notesListCollapsed"
         />
+        
+        <!-- 折叠/展开箭头按钮（只在宽屏和中屏显示） -->
+        <button 
+          class="notes-collapse-toggle-btn"
+          :class="{ collapsed: notesListCollapsed }"
+          @click="notesListCollapsed = !notesListCollapsed"
+          title="收起/展开笔记列表"
+        >
+          <i class="fas" :class="notesListCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+        </button>
         
         <!-- 笔记编辑器 -->
         <NoteEditor 
@@ -52,11 +65,23 @@
         <!-- AI助手 -->
         <AIAssistant 
           :note="activeNote"
+          :collapsed="aiAssistantCollapsed"
           @close="showAIAssistant = false"
           @generate-summary="handleGenerateSummary"
           @generate-tags="handleGenerateTags"
           @find-related="handleFindRelated"
+          @toggle-collapse="aiAssistantCollapsed = !aiAssistantCollapsed"
         />
+        
+        <!-- AI助手折叠/展开箭头按钮（只在宽屏显示） -->
+        <button 
+          class="ai-collapse-toggle-btn"
+          :class="{ collapsed: aiAssistantCollapsed }"
+          @click="aiAssistantCollapsed = !aiAssistantCollapsed"
+          title="收起/展开AI助手"
+        >
+          <i class="fas" :class="aiAssistantCollapsed ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -93,6 +118,8 @@ const sidebarCollapsed = ref(false)
 const showMobileSidebar = ref(false)
 const showAIAssistant = ref(false)
 const activeNote = ref(null)
+const notesListCollapsed = ref(false) // 笔记列表折叠状态
+const aiAssistantCollapsed = ref(false) // AI助手折叠状态
 
 // 侧边栏状态管理
 const loadSidebarState = () => {
@@ -837,6 +864,95 @@ body.dark .container {
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  position: relative; /* 为箭头按钮定位做准备 */
+}
+
+/* 折叠/展开箭头按钮 - 位于笔记列表外部，只在宽屏和中屏显示 */
+.notes-collapse-toggle-btn {
+  display: none; /* 默认隐藏，只在宽屏和中屏显示 */
+  position: absolute;
+  left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px; /* 增大按钮尺寸 */
+  height: 44px;
+  background: none; /* 移除背景 */
+  border: none; /* 移除边框 */
+  box-shadow: none; /* 移除阴影 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: var(--color-text-primary);
+  font-size: 18px; /* 增大箭头图标 */
+}
+
+.notes-collapse-toggle-btn:hover {
+  color: var(--primary-color); /* hover时改变箭头颜色 */
+  transform: translateY(-50%) scale(1.2); /* 放大箭头 */
+}
+
+.notes-collapse-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* 折叠状态下的箭头按钮位置调整 */
+.notes-collapse-toggle-btn.collapsed {
+  left: -15px; /* 笔记列表折叠后，按钮向左移动，避免遮挡文字开头 */
+}
+
+body.dark .notes-collapse-toggle-btn {
+  color: var(--color-text-primary);
+}
+
+body.dark .notes-collapse-toggle-btn:hover {
+  color: var(--primary-color); /* hover时改变箭头颜色 */
+}
+
+/* AI助手折叠/展开箭头按钮 - 位于AI栏左侧，只在宽屏显示 */
+.ai-collapse-toggle-btn {
+  display: none; /* 默认隐藏，只在宽屏显示 */
+  position: absolute;
+  right: 280px; /* 位于AI栏左边框上（AI栏宽度280px） */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  background: none; /* 移除背景 */
+  border: none; /* 移除边框 */
+  box-shadow: none; /* 移除阴影 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: var(--color-text-primary);
+  font-size: 18px;
+}
+
+.ai-collapse-toggle-btn:hover {
+  color: var(--primary-color); /* hover时改变箭头颜色 */
+  transform: translateY(-50%) scale(1.2); /* 放大箭头 */
+}
+
+.ai-collapse-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* 折叠状态下的AI箭头按钮位置调整 */
+.ai-collapse-toggle-btn.collapsed {
+  right: 0px; /* AI栏折叠后，按钮移到右侧边缘，避免遮挡文字 */
+}
+
+body.dark .ai-collapse-toggle-btn {
+  color: var(--color-text-primary);
+}
+
+body.dark .ai-collapse-toggle-btn:hover {
+  color: var(--primary-color); /* hover时改变箭头颜色 */
 }
 
 .sidebar-overlay {
@@ -861,15 +977,72 @@ body.dark .container {
   }
 }
 
-@media (max-width: 1024px) {
+/* 中屏模式（769px - 1024px）：保持横向布局，显示笔记列表和编辑器 */
+@media (max-width: 1024px) and (min-width: 769px) {
   .content-area {
-    flex-direction: column;
+    flex-direction: row;
+  }
+  
+  /* 隐藏AI助手，只显示笔记列表和编辑器 */
+  .content-area > .ai-assistant {
+    display: none;
+  }
+  
+  /* 中屏模式下显示箭头按钮 */
+  .notes-collapse-toggle-btn {
+    display: flex;
+    left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
+  }
+  
+  .notes-collapse-toggle-btn.collapsed {
+    left: -15px; /* 折叠后向左移动，避免遮挡文字开头 */
   }
 }
 
+/* 宽屏模式（>1024px）：显示箭头按钮 */
+@media (min-width: 1025px) {
+  .notes-collapse-toggle-btn {
+    display: flex;
+    left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
+  }
+  
+  .notes-collapse-toggle-btn.collapsed {
+    left: -15px; /* 折叠后向左移动，避免遮挡文字开头 */
+  }
+  
+  /* AI助手折叠按钮只在宽屏显示 */
+  .ai-collapse-toggle-btn {
+    display: flex;
+    right: 280px; /* 位于AI栏左边框上（AI栏宽度280px） */
+  }
+  
+  .ai-collapse-toggle-btn.collapsed {
+    right: 0px; /* AI栏折叠后，按钮移到右侧边缘，避免遮挡文字 */
+  }
+}
+
+/* 窄屏模式（≤768px）：垂直布局，只显示笔记列表 */
 @media (max-width: 768px) {
   .content-area {
     flex-direction: column;
+    width: 100%;
+  }
+  
+  /* 窄屏模式下，笔记列表占据全部宽度 */
+  .content-area > :not(.notes-list) {
+    display: none !important;
+  }
+  
+  .content-area .notes-list {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1;
+  }
+  
+  /* 窄屏模式下隐藏箭头按钮 */
+  .notes-collapse-toggle-btn {
+    display: none !important;
   }
 }
 </style>

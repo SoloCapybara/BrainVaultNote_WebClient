@@ -198,16 +198,17 @@
       </div>
     </div>
     
-    <!-- 颜色选择模态框 -->
-    <div 
-      class="color-picker-modal" 
-      :class="{ active: showColorPicker }"
-      @click="closeColorPicker"
-    >
+    <!-- 颜色选择模态框 - 使用 Teleport 传送到 body，避免受侧边栏影响 -->
+    <Teleport to="body">
       <div 
-        class="modal-content" 
-        @click.stop
+        class="color-picker-modal" 
+        :class="{ active: showColorPicker }"
+        @click="closeColorPicker"
       >
+        <div 
+          class="modal-content" 
+          @click.stop
+        >
         <div class="modal-header">
           <h3>主题设置</h3>
           <button class="close-btn" @click="closeColorPicker">
@@ -276,8 +277,9 @@
           </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </Teleport>
     
   </div>
 </template>
@@ -299,6 +301,7 @@ const emit = defineEmits<{
   'select-note': [note: any]
   'change-theme-color': [color: string]
   'toggle-theme': []
+  'close-mobile-sidebar': []
 }>()
 
 // 响应式状态
@@ -545,7 +548,16 @@ const selectDarkMode = () => {
 }
 
 const toggleColorPicker = () => {
-  showColorPicker.value = true
+  // 如果是窄屏模式且侧边栏打开，先关闭侧边栏
+  if (window.innerWidth <= 768 && props.mobileOpen) {
+    emit('close-mobile-sidebar')
+    // 延迟打开模态框，等待侧边栏关闭动画完成
+    setTimeout(() => {
+      showColorPicker.value = true
+    }, 300)
+  } else {
+    showColorPicker.value = true
+  }
 }
 
 const closeColorPicker = () => {
@@ -1661,10 +1673,14 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10000; /* 提高层级，确保在侧边栏之上 */
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* 确保模态框脱离任何父元素的定位上下文 */
+  margin: 0;
+  padding: 0;
+  transform: none;
 }
 
 .color-picker-modal.active {
@@ -1833,8 +1849,17 @@ image.png
   font-size: 18px;
   color: #666;
   cursor: pointer;
-  padding: 5px;
-  border-radius: 4px;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
@@ -2047,6 +2072,70 @@ body.dark .color-option-modal.disabled {
   
   .search-box input {
     padding: 12px 90px 12px 15px; /* 移动端也需要更多空间 */
+  }
+  
+  /* 窄屏模式下模态框样式优化 - 确保在屏幕居中 */
+  .color-picker-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 10000 !important; /* 确保在侧边栏之上 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important; /* 确保不受父元素transform影响 */
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+  
+  .modal-content {
+    position: relative !important;
+    max-width: 90vw !important;
+    width: 90vw !important;
+    padding: 20px;
+    transform: scale(0.85); /* 缩小比例 */
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 0 !important;
+  }
+  
+  .color-picker-modal.active .modal-content {
+    transform: scale(0.9); /* 激活时稍微放大，但仍然比默认小 */
+  }
+  
+  .modal-header {
+    margin-bottom: 15px;
+  }
+  
+  .modal-header h3 {
+    font-size: 18px;
+  }
+  
+  .theme-mode-section {
+    margin-bottom: 20px;
+  }
+  
+  .theme-mode-section h4,
+  .theme-color-section h4 {
+    font-size: 14px;
+  }
+  
+  .theme-tip {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+  
+  .theme-mode-option {
+    padding: 15px;
+  }
+  
+  .color-option-modal {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>
