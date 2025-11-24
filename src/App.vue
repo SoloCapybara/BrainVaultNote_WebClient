@@ -1,11 +1,29 @@
 <template>
   <div id="app">
     <MainLayout />
+    <Message ref="messageRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import MainLayout from './components/layout/MainLayout.vue'
+import { ref, onMounted, nextTick } from 'vue'
+import MainLayout from './components/layout/main/MainLayout.vue'
+import Message from './components/ui/Message.vue'
+import { setMessageInstance } from './utils/message'
+
+const messageRef = ref<InstanceType<typeof Message> | null>(null)
+
+onMounted(() => {
+  // 使用 nextTick 确保组件完全挂载后再注册
+  nextTick(() => {
+    if (messageRef.value) {
+      setMessageInstance(messageRef.value)
+      console.log('Message instance registered')
+    } else {
+      console.warn('Message ref is null')
+    }
+  })
+})
 </script>
 
 <style>
@@ -30,29 +48,7 @@ body {
   overflow: hidden;
 }
 
-/* 深色模式全局变量 */
-body.dark {
-  --color-bg-primary: #1a1a1a;
-  --color-bg-secondary: #2a2a2a;
-  --color-text-primary: #e9ecef;
-  --color-text-secondary: #adb5bd;
-  --color-border: #404040;
-  --color-bg-hover: #333333;
-  --color-primary: #5b6bf0;
-  --dark-color: #212529;
-}
-
-/* 浅色模式全局变量 */
-body:not(.dark) {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f8f9fa;
-  --color-text-primary: #333333;
-  --color-text-secondary: #6c757d;
-  --color-border: #e0e0e0;
-  --color-bg-hover: #f5f5f5;
-  --color-primary: #5b6bf0;
-  --dark-color: #212529;
-}
+/* CSS变量定义已移至 main.css，这里只保留样式使用 */
 
 /* 深色模式全局样式 */
 body.dark {
@@ -106,7 +102,7 @@ body:not(.dark) {
 
 .main-content .note-item.active {
   background-color: #f0f7ff;
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--primary-color);
   color: var(--dark-color);
 }
 
@@ -238,7 +234,7 @@ body:not(.dark) .main-content .tag {
 
 body:not(.dark) .main-content .tag.ai-tag {
   background-color: #f0f7ff;
-  color: var(--color-primary);
+  color: var(--primary-color);
 }
 
 /* 标签 - 深色模式 */
@@ -265,7 +261,7 @@ body.dark .main-content .ai-section p {
 body.dark .main-content .ai-section h3 i,
 body.dark .main-content .ai-section h3 .fas,
 body.dark .main-content .ai-section h3 .far {
-  color: var(--color-primary);
+  color: var(--primary-color);
 }
 
 body.dark .main-content .ai-action-btn i,

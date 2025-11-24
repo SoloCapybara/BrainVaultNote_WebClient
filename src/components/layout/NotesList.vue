@@ -2,9 +2,22 @@
   <div class="notes-list" :class="{ collapsed: collapsed }">
     <div class="notes-header">
       <h2>我的笔记</h2>
-      <button class="new-note-btn" @click="$emit('new-note')">
-        <i class="fas fa-plus"></i> 新建笔记
-      </button>
+      <Dropdown v-model="showNoteTypeMenu">
+        <template #trigger>
+          <button class="new-note-btn">
+            <i class="fas fa-plus"></i> 新建笔记
+            <i class="fas fa-chevron-down" :class="{ rotated: showNoteTypeMenu }"></i>
+          </button>
+        </template>
+        <DropdownItem @click="createNote('richText')">
+          <i class="fas fa-file-alt"></i>
+          <span class="menu-item-title">文档类型</span>
+        </DropdownItem>
+        <DropdownItem @click="createNote('markdown')">
+          <i class="fab fa-markdown"></i>
+          <span class="menu-item-title">原生 Markdown</span>
+        </DropdownItem>
+      </Dropdown>
     </div>
     
     <div class="notes-container">
@@ -53,6 +66,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Pagination from '../ui/Pagination.vue'
+import Dropdown from '../ui/Dropdown.vue'
+import DropdownItem from '../ui/DropdownItem.vue'
 
 // Props
 const props = defineProps<{
@@ -64,9 +79,18 @@ const props = defineProps<{
 // Emits
 const emit = defineEmits<{
   'select-note': [note: any]
-  'new-note': []
+  'new-note': [noteType?: 'richText' | 'markdown']
   'toggle-collapse': []
 }>()
+
+// 新建笔记类型菜单显示状态
+const showNoteTypeMenu = ref(false)
+
+// 创建笔记
+const createNote = (noteType: 'richText' | 'markdown') => {
+  showNoteTypeMenu.value = false
+  emit('new-note', noteType)
+}
 
 // 分页状态
 const currentPage = ref(1)
@@ -217,6 +241,10 @@ body.dark .tag.ai-tag {
   color: #7b9fff;
 }
 
+.new-note-actions {
+  position: relative;
+}
+
 .new-note-btn {
   background-color: #5b6bf0;
   color: white;
@@ -239,6 +267,17 @@ body.dark .tag.ai-tag {
 
 .new-note-btn i {
   margin-right: 5px;
+}
+
+.new-note-btn .fa-chevron-down {
+  margin-left: 5px;
+  margin-right: 0;
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.new-note-btn .fa-chevron-down.rotated {
+  transform: rotate(180deg);
 }
 
 .notes-container {
@@ -327,6 +366,7 @@ body.dark .note-date {
   margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;

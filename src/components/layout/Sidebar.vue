@@ -96,47 +96,6 @@
       </div>
     </div>
     
-    <!-- 分类导航 -->
-    <div class="nav-section">
-      <div class="nav-title">分类</div>
-      <div 
-        class="nav-item" 
-        :class="{ active: activeCategory === 'work' }"
-        @click="handleNavItemClick('work', 'category', $event)"
-        ref="navItemWork"
-      >
-        <i class="fas fa-book"></i>
-        <span>工作</span>
-      </div>
-      <div 
-        class="nav-item" 
-        :class="{ active: activeCategory === 'creative' }"
-        @click="handleNavItemClick('creative', 'category', $event)"
-        ref="navItemCreative"
-      >
-        <i class="fas fa-lightbulb"></i>
-        <span>创意</span>
-      </div>
-      <div 
-        class="nav-item" 
-        :class="{ active: activeCategory === 'study' }"
-        @click="handleNavItemClick('study', 'category', $event)"
-        ref="navItemStudy"
-      >
-        <i class="fas fa-graduation-cap"></i>
-        <span>学习</span>
-      </div>
-      <div 
-        class="nav-item" 
-        :class="{ active: activeCategory === 'personal' }"
-        @click="handleNavItemClick('personal', 'category', $event)"
-        ref="navItemPersonal"
-      >
-        <i class="fas fa-heart"></i>
-        <span>个人</span>
-      </div>
-    </div>
-    
     <!-- AI工具 -->
     <div class="nav-section">
       <div class="nav-title">AI工具</div>
@@ -184,6 +143,15 @@
           :style="{ backgroundColor: selectedColor }"
         ></div>
       </div>
+      <!-- 收起状态下的搜索按钮 -->
+      <div 
+        v-if="collapsed"
+        class="nav-item search-icon-nav-item" 
+        @click="toggleSearchModal"
+      >
+        <i class="fas fa-search"></i>
+        <span>搜索</span>
+      </div>
     </div>
     
     <!-- 底部导航 -->
@@ -197,6 +165,58 @@
         <span>帮助</span>
       </div>
     </div>
+    
+    <!-- 搜索模态框 - 使用 Teleport 传送到 body，避免受侧边栏影响 -->
+    <Teleport to="body">
+      <div 
+        class="search-modal" 
+        :class="{ active: showSearchModal }"
+        @click="closeSearchModal"
+      >
+        <div 
+          class="search-modal-content" 
+          @click.stop
+        >
+          <div class="search-modal-header">
+            <h3>搜索笔记</h3>
+            <button class="close-btn" @click="closeSearchModal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="search-modal-body">
+            <div class="search-input-wrapper-modal">
+              <input 
+                type="text" 
+                placeholder="搜索笔记..." 
+                v-model="searchQuery"
+                @input="handleSearch"
+                @keyup.enter="handleSearch"
+                @keyup.esc="closeSearchModal"
+                ref="searchModalInput"
+                autofocus
+              >
+              <div class="search-buttons-modal">
+                <button 
+                  v-if="searchQuery" 
+                  class="clear-btn-modal" 
+                  @click="handleClearSearch"
+                  type="button"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+                <button 
+                  class="search-btn-modal" 
+                  @click="handleSearchClick"
+                  type="button"
+                >
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
     
     <!-- 颜色选择模态框 - 使用 Teleport 传送到 body，避免受侧边栏影响 -->
     <Teleport to="body">
@@ -309,10 +329,11 @@ const searchQuery = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
 const toggleButton = ref<HTMLButtonElement | null>(null)
 const activeSection = ref('home')
-const activeCategory = ref('')
 const activeTool = ref('')
 const selectedColor = ref('#5b6bf0')
 const showColorPicker = ref(false)
+const showSearchModal = ref(false)
+const searchModalInput = ref<HTMLInputElement | null>(null)
 
 // 主题颜色选项
 const themeColors = [
@@ -464,8 +485,6 @@ const handleNavItemClick = (item: string, type: string, event: Event) => {
   setTimeout(() => {
     if (type === 'section') {
       setActiveSection(item)
-    } else if (type === 'category') {
-      setActiveCategory(item)
     } else if (type === 'tool') {
       setActiveTool(item)
     }
@@ -474,20 +493,12 @@ const handleNavItemClick = (item: string, type: string, event: Event) => {
 
 const setActiveSection = (section: string) => {
   activeSection.value = section
-  activeCategory.value = ''
-  activeTool.value = ''
-}
-
-const setActiveCategory = (category: string) => {
-  activeCategory.value = category
-  activeSection.value = ''
   activeTool.value = ''
 }
 
 const setActiveTool = (tool: string) => {
   activeTool.value = tool
   activeSection.value = ''
-  activeCategory.value = ''
 }
 
 
@@ -562,6 +573,35 @@ const toggleColorPicker = () => {
 
 const closeColorPicker = () => {
   showColorPicker.value = false
+}
+
+const toggleSearchModal = () => {
+  // 如果是窄屏模式且侧边栏打开，先关闭侧边栏
+  if (window.innerWidth <= 768 && props.mobileOpen) {
+    emit('close-mobile-sidebar')
+    // 延迟打开模态框，等待侧边栏关闭动画完成
+    setTimeout(() => {
+      showSearchModal.value = true
+      // 聚焦到搜索输入框
+      nextTick(() => {
+        if (searchModalInput.value) {
+          searchModalInput.value.focus()
+        }
+      })
+    }, 300)
+  } else {
+    showSearchModal.value = true
+    // 聚焦到搜索输入框
+    nextTick(() => {
+      if (searchModalInput.value) {
+        searchModalInput.value.focus()
+      }
+    })
+  }
+}
+
+const closeSearchModal = () => {
+  showSearchModal.value = false
 }
 
 const selectColorFromModal = (color: string) => {
@@ -939,7 +979,7 @@ const darkenColor = (color: string, percent: number) => {
   height: 100vh;
   background: linear-gradient(135deg, #5b6bf0, #3a4bd8);
   color: white;
-  padding: 20px 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -1124,6 +1164,17 @@ body:not(.dark) .sidebar[data-theme-color] .toggle-sidebar:active {
   background-color: rgba(255, 255, 255, 0.3) !important;
 }
 
+/* 收起状态下的搜索按钮 */
+/* 收起状态下的搜索按钮（作为导航项） */
+.search-icon-nav-item {
+  cursor: pointer;
+}
+
+/* 收起状态下隐藏搜索按钮的文字 */
+.sidebar.collapsed .search-icon-nav-item span {
+  display: none;
+}
+
 /* 防止所有子元素文字被选中 */
 .sidebar * {
   user-select: none;
@@ -1177,25 +1228,45 @@ body:not(.dark) .sidebar::-webkit-scrollbar-thumb:hover {
   display: none;
 }
 
+/* 收起状态下显示搜索按钮 */
+.sidebar.collapsed .search-icon-nav-item {
+  display: flex !important;
+}
+
+.sidebar.collapsed .search-icon-nav-item span {
+  display: none;
+}
+
 
 .sidebar.collapsed .nav-item {
   justify-content: center;
-  padding: 15px 10px;
+  padding: 10px 10px;
 }
 
 .sidebar.collapsed .nav-item i {
   margin-right: 0;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px 20px;
+  padding: 10px 20px 12px; /* 顶部padding 10px，微调使分割线对齐TopBar底边（60px） */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  min-height: 60px; /* 确保logo区域总高度为60px，使分割线对齐TopBar */
+  box-sizing: border-box;
+}
+
+/* 浅色模式下的分割线颜色 */
+body:not(.dark) .sidebar:not([data-theme-color]) .logo {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+body:not(.dark) .sidebar[data-theme-color] .logo {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
 }
 
 .logo-content {
@@ -1205,8 +1276,9 @@ body:not(.dark) .sidebar::-webkit-scrollbar-thumb:hover {
 }
 
 .sidebar.collapsed .logo {
-  padding: 0 10px 10px;
+  padding: 10px 10px 12px; /* 保持顶部padding一致 */
   justify-content: center;
+  min-height: 60px; /* 保持高度一致 */
 }
 
 .sidebar.collapsed .logo-content {
@@ -1214,13 +1286,13 @@ body:not(.dark) .sidebar::-webkit-scrollbar-thumb:hover {
 }
 
 .logo i {
-  font-size: 28px;
-  margin-right: 10px;
+  font-size: 24px;
+  margin-right: 8px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .logo h1 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -1336,22 +1408,22 @@ body:not(.dark) .sidebar::-webkit-scrollbar-thumb:hover {
 }
 
 .nav-section {
-  margin-bottom: 30px;
+  margin-bottom: 16px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .nav-title {
-  font-size: 14px;
+  font-size: 12px;
   text-transform: uppercase;
   padding: 0 20px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   opacity: 0.7;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .nav-item {
-  padding: 12px 20px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -1401,11 +1473,15 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
 }
 
 .nav-item i {
-  margin-right: 12px;
-  font-size: 18px;
-  width: 24px;
+  margin-right: 10px;
+  font-size: 16px;
+  width: 20px;
   text-align: center;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.nav-item span {
+  font-size: 14px;
 }
 
 /* 导航项涟漪效果 - 从左到右扩散 */
@@ -1454,7 +1530,7 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
 
 .search-box {
   padding: 0 20px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -1466,12 +1542,12 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
 
 .search-box input {
   width: 100%;
-  padding: 12px 80px 12px 15px; /* 增加右边距为更大的圆形按钮留空间 */
-  border-radius: 8px;
+  padding: 8px 65px 8px 12px; /* 减少内边距，适配更小的按钮 */
+  border-radius: 6px;
   border: none;
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   outline: none; /* 取消outline */
 }
@@ -1494,8 +1570,8 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
 
 .clear-btn,
 .search-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 50%; /* 圆形按钮 */
   background-color: rgba(255, 255, 255, 0.2);
@@ -1509,6 +1585,7 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
   padding: 0; /* 确保图标完全居中 */
   position: relative;
   overflow: hidden; /* 确保波纹效果不超出圆形边界 */
+  font-size: 12px;
 }
 
 .clear-btn:focus,
@@ -1661,6 +1738,209 @@ body:not(.dark) .sidebar[data-theme-color] .nav-item.active {
   transform: translate(50%, -50%) scale(1.1);
 }
 
+
+/* 搜索模态框 */
+.search-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.28, 0.11, 0.32, 1),
+              background-color 0.4s cubic-bezier(0.28, 0.11, 0.32, 1);
+  margin: 0;
+  padding: 0;
+  transform: none;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.search-modal.active {
+  opacity: 1;
+  visibility: visible;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.search-modal-content {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.8) translateY(20px);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.28, 0.11, 0.32, 1),
+              opacity 0.5s cubic-bezier(0.28, 0.11, 0.32, 1);
+  will-change: transform, opacity;
+}
+
+.search-modal.active .search-modal-content {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.search-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.5s cubic-bezier(0.28, 0.11, 0.32, 1) 0.1s,
+              transform 0.5s cubic-bezier(0.28, 0.11, 0.32, 1) 0.1s;
+}
+
+.search-modal.active .search-modal-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.search-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.search-modal-body {
+  width: 100%;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s cubic-bezier(0.28, 0.11, 0.32, 1) 0.15s,
+              transform 0.5s cubic-bezier(0.28, 0.11, 0.32, 1) 0.15s;
+}
+
+.search-modal.active .search-modal-body {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.search-input-wrapper-modal {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrapper-modal input {
+  width: 100%;
+  padding: 12px 80px 12px 15px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  background-color: #f5f5f5;
+  color: #000000;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.28, 0.11, 0.32, 1);
+  outline: none;
+}
+
+.search-input-wrapper-modal input:focus {
+  border-color: var(--primary-color);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(91, 107, 240, 0.1);
+  transform: scale(1.01);
+}
+
+.search-input-wrapper-modal input::placeholder {
+  color: #999;
+}
+
+.search-buttons-modal {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.clear-btn-modal,
+.search-btn-modal {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(91, 107, 240, 0.1);
+  color: var(--primary-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  outline: none;
+  padding: 0;
+}
+
+.clear-btn-modal:hover,
+.search-btn-modal:hover {
+  background-color: rgba(91, 107, 240, 0.2);
+  transform: scale(1.05);
+}
+
+.clear-btn-modal:active,
+.search-btn-modal:active {
+  transform: scale(0.95);
+}
+
+.clear-btn-modal i,
+.search-btn-modal i {
+  font-size: 12px;
+}
+
+/* 深色模式下的搜索模态框 */
+body.dark .search-modal-content {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+body.dark .search-modal-header h3 {
+  color: var(--color-text-primary);
+}
+
+body.dark .search-input-wrapper-modal input {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+body.dark .search-input-wrapper-modal input:focus {
+  border-color: var(--primary-color);
+  background-color: var(--color-bg-primary);
+}
+
+body.dark .search-input-wrapper-modal input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+body.dark .clear-btn-modal,
+body.dark .search-btn-modal {
+  background-color: rgba(91, 107, 240, 0.2);
+  color: var(--primary-color);
+}
+
+body.dark .clear-btn-modal:hover,
+body.dark .search-btn-modal:hover {
+  background-color: rgba(91, 107, 240, 0.3);
+}
+
+/* 窄屏模式下的搜索模态框 */
+@media (max-width: 768px) {
+  .search-modal-content {
+    max-width: 90%;
+    padding: 20px;
+  }
+  
+  .search-modal-header h3 {
+    font-size: 18px;
+  }
+}
 
 /* 颜色选择模态框 */
 .color-picker-modal {

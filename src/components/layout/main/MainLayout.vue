@@ -34,22 +34,22 @@
       />
       
       <!-- 内容区域 -->
-      <div class="content-area">
+      <div class="content-area" :class="{ 'mid-screen': isMidScreen }">
         <!-- 笔记列表 -->
         <NotesList 
           :notes="notes"
           :active-note="activeNote"
           :collapsed="notesListCollapsed"
           @select-note="selectNote"
-          @new-note="createNewNote"
-          @toggle-collapse="notesListCollapsed = !notesListCollapsed"
+          @new-note="(noteType?: 'richText' | 'markdown') => createNewNote(noteType)"
+          @toggle-collapse="toggleNotesList"
         />
         
         <!-- 折叠/展开箭头按钮（只在宽屏和中屏显示） -->
         <button 
           class="notes-collapse-toggle-btn"
           :class="{ collapsed: notesListCollapsed }"
-          @click="notesListCollapsed = !notesListCollapsed"
+          @click="toggleNotesList"
           title="收起/展开笔记列表"
         >
           <i class="fas" :class="notesListCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
@@ -70,14 +70,14 @@
           @generate-summary="handleGenerateSummary"
           @generate-tags="handleGenerateTags"
           @find-related="handleFindRelated"
-          @toggle-collapse="aiAssistantCollapsed = !aiAssistantCollapsed"
+          @toggle-collapse="toggleAIAssistant"
         />
         
-        <!-- AI助手折叠/展开箭头按钮（只在宽屏显示） -->
+        <!-- AI助手折叠/展开箭头按钮（只在宽屏和中屏显示） -->
         <button 
           class="ai-collapse-toggle-btn"
           :class="{ collapsed: aiAssistantCollapsed }"
-          @click="aiAssistantCollapsed = !aiAssistantCollapsed"
+          @click="toggleAIAssistant"
           title="收起/展开AI助手"
         >
           <i class="fas" :class="aiAssistantCollapsed ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
@@ -88,13 +88,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import Sidebar from './Sidebar.vue'
-import TopBar from './TopBar.vue'
-import NotesList from './NotesList.vue'
-import NoteEditor from './NoteEditor.vue'
-import AIAssistant from './AIAssistant.vue'
-import { useThemeFinal } from '../../composables/useThemeFinal'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import Sidebar from '../Sidebar.vue'
+import TopBar from '../TopBar.vue'
+import NotesList from '../NotesList.vue'
+import NoteEditor from '../NoteEditor.vue'
+import AIAssistant from '../AIAssistant.vue'
+import { useThemeFinal } from '../../../composables/useThemeFinal'
 
 // 主题管理
 const { isDark, toggleTheme: toggleThemeGlobal } = useThemeFinal()
@@ -117,9 +117,15 @@ const toggleGlobalTheme = () => {
 const sidebarCollapsed = ref(false)
 const showMobileSidebar = ref(false)
 const showAIAssistant = ref(false)
-const activeNote = ref(null)
+const activeNote = ref<any>(null)
 const notesListCollapsed = ref(false) // 笔记列表折叠状态
 const aiAssistantCollapsed = ref(false) // AI助手折叠状态
+const windowWidth = ref(window.innerWidth) // 窗口宽度
+
+// 计算属性：判断是否是中屏模式
+const isMidScreen = computed(() => {
+  return windowWidth.value > 768 && windowWidth.value <= 1024
+})
 
 // 侧边栏状态管理
 const loadSidebarState = () => {
@@ -132,6 +138,36 @@ const loadSidebarState = () => {
 const saveSidebarState = () => {
   localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value.toString())
 }
+
+// 笔记列表和AI助手折叠状态管理
+const loadCollapsedStates = () => {
+  const savedNotesListState = localStorage.getItem('notesListCollapsed')
+  if (savedNotesListState !== null) {
+    notesListCollapsed.value = savedNotesListState === 'true'
+  }
+  
+  const savedAIAssistantState = localStorage.getItem('aiAssistantCollapsed')
+  if (savedAIAssistantState !== null) {
+    aiAssistantCollapsed.value = savedAIAssistantState === 'true'
+  }
+}
+
+const saveNotesListState = () => {
+  localStorage.setItem('notesListCollapsed', notesListCollapsed.value.toString())
+}
+
+const saveAIAssistantState = () => {
+  localStorage.setItem('aiAssistantCollapsed', aiAssistantCollapsed.value.toString())
+}
+
+// 监听折叠状态变化并保存
+watch(notesListCollapsed, () => {
+  saveNotesListState()
+})
+
+watch(aiAssistantCollapsed, () => {
+  saveAIAssistantState()
+})
 
 // 笔记数据
 const notes = ref([
@@ -686,16 +722,55 @@ const selectNote = (note: any) => {
   }
 }
 
-const createNewNote = () => {
-  const newNote = {
+// 切换笔记列表（中屏模式下：只有当两个都展开时，展开一个才收起另一个）
+const toggleNotesList = () => {
+  const isMidScreen = window.innerWidth > 768 && window.innerWidth <= 1024
+  const wasCollapsed = notesListCollapsed.value
+  notesListCollapsed.value = !notesListCollapsed.value
+  
+  // 中屏模式下：只有当两个都展开时，展开笔记列表才收起AI栏
+  if (isMidScreen) {
+    if (!wasCollapsed && !aiAssistantCollapsed.value) {
+      // 两个都展开时，收起笔记列表，也收起AI栏（保持两栏显示）
+      aiAssistantCollapsed.value = true
+    } else if (wasCollapsed && !aiAssistantCollapsed.value) {
+      // 只有AI栏展开时，展开笔记列表，收起AI栏（保持两栏显示）
+      aiAssistantCollapsed.value = true
+    }
+    // 其他情况：可以两个都收起，或者只展开一个
+  }
+}
+
+// 切换AI助手（中屏模式下：只有当两个都展开时，展开一个才收起另一个）
+const toggleAIAssistant = () => {
+  const isMidScreen = window.innerWidth > 768 && window.innerWidth <= 1024
+  const wasCollapsed = aiAssistantCollapsed.value
+  aiAssistantCollapsed.value = !aiAssistantCollapsed.value
+  
+  // 中屏模式下：只有当两个都展开时，展开AI栏才收起笔记列表
+  if (isMidScreen) {
+    if (!wasCollapsed && !notesListCollapsed.value) {
+      // 两个都展开时，收起AI栏，也收起笔记列表（保持两栏显示）
+      notesListCollapsed.value = true
+    } else if (wasCollapsed && !notesListCollapsed.value) {
+      // 只有笔记列表展开时，展开AI栏，收起笔记列表（保持两栏显示）
+      notesListCollapsed.value = true
+    }
+    // 其他情况：可以两个都收起，或者只展开一个
+  }
+}
+
+const createNewNote = (noteType?: 'richText' | 'markdown') => {
+  const newNote: any = {
     id: Date.now(),
-    title: '新建笔记',
+    title: noteType === 'markdown' ? '新建 Markdown 笔记' : '新建文档',
     content: '',
     preview: '',
     tags: [],
     date: new Date().toISOString().split('T')[0],
     wordCount: 0,
-    isAI: false
+    isAI: false,
+    noteType: noteType || 'richText' // 默认为文档类型
   }
   notes.value.unshift(newNote)
   activeNote.value = newNote
@@ -752,10 +827,10 @@ const handleChangeThemeColor = (color: string) => {
     
     if (isCurrentlyDark) {
       // 深色模式 - 使用黑色渐变
-      sidebar.style.background = 'linear-gradient(135deg, #000000, #1a1a1a)'
+      (sidebar as HTMLElement).style.background = 'linear-gradient(135deg, #000000, #1a1a1a)'
     } else {
       // 浅色模式 - 使用纯白色背景
-      sidebar.style.background = '#ffffff'
+      (sidebar as HTMLElement).style.background = '#ffffff'
     }
   }
 }
@@ -786,9 +861,30 @@ const handleFindRelated = () => {
 
 // 窗口大小变化处理
 const handleResize = () => {
+  const width = window.innerWidth
+  windowWidth.value = width // 更新窗口宽度
+  const isNarrowScreen = width <= 768
+  const isMidScreen = width > 768 && width <= 1024
+  
   // 在移动端时自动关闭侧边栏
-  if (window.innerWidth <= 768) {
+  if (isNarrowScreen) {
     showMobileSidebar.value = false
+    // 窄屏模式下，如果笔记列表被折叠，自动展开
+    if (notesListCollapsed.value) {
+      notesListCollapsed.value = false
+    }
+    // 窄屏模式下，如果AI助手被折叠，自动展开（虽然窄屏不显示AI助手，但保持状态一致）
+    if (aiAssistantCollapsed.value) {
+      aiAssistantCollapsed.value = false
+    }
+  }
+  
+  // 中屏模式下：如果两个都展开，默认显示笔记列表，收起AI栏（保持两栏显示）
+  if (isMidScreen) {
+    if (!notesListCollapsed.value && !aiAssistantCollapsed.value) {
+      aiAssistantCollapsed.value = true
+    }
+    // 允许两个都收起，不强制展开
   }
 }
 
@@ -797,11 +893,21 @@ onMounted(() => {
   // 加载侧边栏状态
   loadSidebarState()
   
+  // 加载笔记列表和AI助手的折叠状态
+  loadCollapsedStates()
+  
   // 不再需要加载编辑区域主题，因为现在使用全局主题
   
   // 设置默认选中的笔记
   if (notes.value.length > 0) {
-    activeNote.value = notes.value[0]
+    activeNote.value = notes.value[0] as any
+  }
+  
+  // 初始化时检查窗口大小，确保窄屏模式下笔记列表展开
+  // 注意：这里只在窄屏模式下强制展开，宽屏和中屏模式会使用保存的状态
+  if (window.innerWidth <= 768) {
+    notesListCollapsed.value = false
+    aiAssistantCollapsed.value = false
   }
   
   // 监听窗口大小变化
@@ -977,18 +1083,23 @@ body.dark .ai-collapse-toggle-btn:hover {
   }
 }
 
-/* 中屏模式（769px - 1024px）：保持横向布局，显示笔记列表和编辑器 */
+/* 中屏模式（769px - 1024px）：保持横向布局，显示两栏（笔记列表+编辑器 或 编辑器+AI栏） */
 @media (max-width: 1024px) and (min-width: 769px) {
   .content-area {
     flex-direction: row;
   }
   
-  /* 隐藏AI助手，只显示笔记列表和编辑器 */
-  .content-area > .ai-assistant {
-    display: none;
+  /* 中屏模式下：如果笔记列表展开且AI栏也展开，隐藏AI栏 */
+  .content-area.mid-screen .notes-list:not(.collapsed) ~ .ai-assistant:not(.collapsed) {
+    display: none !important;
   }
   
-  /* 中屏模式下显示箭头按钮 */
+  /* 中屏模式下：如果AI栏展开且笔记列表也展开，隐藏笔记列表 */
+  .content-area.mid-screen .ai-assistant:not(.collapsed) ~ .notes-list:not(.collapsed) {
+    display: none !important;
+  }
+  
+  /* 中屏模式下显示笔记列表箭头按钮 */
   .notes-collapse-toggle-btn {
     display: flex;
     left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
@@ -996,6 +1107,26 @@ body.dark .ai-collapse-toggle-btn:hover {
   
   .notes-collapse-toggle-btn.collapsed {
     left: -15px; /* 折叠后向左移动，避免遮挡文字开头 */
+  }
+  
+  /* 中屏模式下显示AI栏箭头按钮 */
+  .ai-collapse-toggle-btn {
+    display: flex;
+    right: 240px; /* 位于AI栏左边框附近，更靠近AI栏 */
+  }
+  
+  .ai-collapse-toggle-btn.collapsed {
+    right: 0px; /* AI栏折叠后，按钮移到右侧边缘，避免遮挡文字 */
+  }
+  
+  /* 中屏模式下，如果笔记列表收起，确保AI栏显示 */
+  .content-area.mid-screen .notes-list.collapsed ~ .ai-assistant {
+    display: flex !important;
+  }
+  
+  /* 中屏模式下，如果AI栏收起，确保笔记列表显示 */
+  .content-area.mid-screen .ai-assistant.collapsed ~ .notes-list {
+    display: flex !important;
   }
 }
 

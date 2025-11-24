@@ -3,30 +3,59 @@
 /* CSS变量定义 - 浅色模式 */
 :root {
   --color-bg-primary: #ffffff;
-  --color-bg-secondary: #ffffff;
-  --color-text-primary: #000000;
+  --color-bg-secondary: #f8f9fa;
+  --color-text-primary: #333333;
   --color-text-secondary: #6c757d;
-  --color-border: #eaeaea;
+  --color-border: #e0e0e0;
+  --color-bg-hover: #f5f5f5;
   --dark-color: #212529;
   --primary-color: #5b6bf0;
   --secondary-color: #3a4bd8;
   --accent-color: #f25f5c;
 }
 
-/* 深色模式 - 使用更高优先级 */
+/* 深色模式 */
 body.dark {
-  --color-bg-primary: #000000 !important;
-  --color-bg-secondary: #000000 !important;
-  --color-text-primary: #ffffff !important;
-  --color-text-secondary: #cccccc !important;
-  --color-border: #333333 !important;
-  --dark-color: #ffffff !important;
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #000000;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cccccc;
+  --color-border: #333333;
+  --color-bg-hover: #1a1a1a;
+  --dark-color: #ffffff;
+  --primary-color: #5b6bf0;
+  --secondary-color: #3a4bd8;
+  --accent-color: #f25f5c;
 }
 
 /* 基础样式重置 */
 * {
   box-sizing: border-box;
   color: inherit;
+}
+
+/* 防止页面加载时的闪烁 - 默认使用浅色背景（与浏览器默认一致） */
+html {
+  background-color: #ffffff;
+  color: #333333;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  background-color: #ffffff;
+  color: #333333;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 深色模式覆盖 */
+body.dark {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+body.dark html {
+  background-color: #000000;
+  color: #ffffff;
 }
 
 /* 按钮样式重置 - 防止丑陋的边框 */
@@ -88,6 +117,88 @@ body.dark ::-webkit-scrollbar-thumb {
 
 body.dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
+}
+
+/* Tiptap 编辑器移除所有边框和轮廓 */
+.tiptap-editor,
+.tiptap-editor .ProseMirror,
+.tiptap-content,
+.tiptap-content .ProseMirror {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.tiptap-editor:focus,
+.tiptap-editor:focus-within,
+.tiptap-editor .ProseMirror:focus,
+.tiptap-editor .ProseMirror:focus-within,
+.tiptap-content:focus,
+.tiptap-content:focus-within,
+.tiptap-content .ProseMirror:focus,
+.tiptap-content .ProseMirror:focus-within {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Tiptap 编辑器选中文本样式 - 全局覆盖 */
+.tiptap-editor *::selection,
+.tiptap-editor::selection,
+.tiptap-content *::selection,
+.tiptap-content::selection,
+.tiptap-content .ProseMirror *::selection,
+.tiptap-content .ProseMirror::selection,
+.tiptap-editor .ProseMirror *::selection,
+.tiptap-editor .ProseMirror::selection,
+.ProseMirror *::selection,
+.ProseMirror::selection {
+  background-color: rgba(138, 43, 226, 0.2) !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+.tiptap-editor *::-moz-selection,
+.tiptap-editor::-moz-selection,
+.tiptap-content *::-moz-selection,
+.tiptap-content::-moz-selection,
+.tiptap-content .ProseMirror *::-moz-selection,
+.tiptap-content .ProseMirror::-moz-selection,
+.tiptap-editor .ProseMirror *::-moz-selection,
+.tiptap-editor .ProseMirror::-moz-selection,
+.ProseMirror *::-moz-selection,
+.ProseMirror::-moz-selection {
+  background-color: rgba(138, 43, 226, 0.2) !important;
+  color: inherit !important;
+}
+
+body.dark .tiptap-editor *::selection,
+body.dark .tiptap-editor::selection,
+body.dark .tiptap-content *::selection,
+body.dark .tiptap-content::selection,
+body.dark .tiptap-content .ProseMirror *::selection,
+body.dark .tiptap-content .ProseMirror::selection,
+body.dark .tiptap-editor .ProseMirror *::selection,
+body.dark .tiptap-editor .ProseMirror::selection,
+body.dark .ProseMirror *::selection,
+body.dark .ProseMirror::selection {
+  background-color: rgba(147, 112, 219, 0.3) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+body.dark .tiptap-editor *::-moz-selection,
+body.dark .tiptap-editor::-moz-selection,
+body.dark .tiptap-content *::-moz-selection,
+body.dark .tiptap-content::-moz-selection,
+body.dark .tiptap-content .ProseMirror *::-moz-selection,
+body.dark .tiptap-content .ProseMirror::-moz-selection,
+body.dark .tiptap-editor .ProseMirror *::-moz-selection,
+body.dark .tiptap-editor .ProseMirror::-moz-selection,
+body.dark .ProseMirror *::-moz-selection,
+body.dark .ProseMirror::-moz-selection {
+  background-color: rgba(147, 112, 219, 0.3) !important;
+  color: #ffffff !important;
 }
 
 /* 全局动画 */
