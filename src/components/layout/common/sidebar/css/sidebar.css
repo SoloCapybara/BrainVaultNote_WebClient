@@ -1,0 +1,113 @@
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  max-height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+  color: white;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: fixed;
+  left: 0;
+  top: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  box-sizing: border-box;
+}
+
+/* 当内容不需要滚动时隐藏滚动条 */
+.sidebar:not(:hover)::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+.sidebar:hover::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* 深色模式下的侧边栏样式 - 只在没有主题色时应用 */
+body.dark .sidebar:not([data-theme-color]) {
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d) !important;
+  color: #ffffff !important;
+}
+
+/* 浅色模式下的侧边栏样式 - 只在没有主题色时应用 */
+body:not(.dark) .sidebar:not([data-theme-color]) {
+  background: #ffffff !important;
+  color: #333333 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 收起状态下的搜索按钮（作为导航项） */
+.search-icon-nav-item {
+  cursor: pointer;
+}
+
+/* 收起状态下隐藏搜索按钮的文字 */
+.sidebar.collapsed .search-icon-nav-item span {
+  display: none;
+}
+
+/* 收起状态下显示搜索按钮，确保与其他导航项对齐 */
+.sidebar.collapsed .search-icon-nav-item {
+  display: flex !important;
+  justify-content: center;
+  padding: 10px !important;
+}
+
+.sidebar.collapsed .search-icon-nav-item i {
+  margin-right: 0 !important;
+}
+
+.sidebar.collapsed {
+  width: 90px;
+}
+
+/* 移动端样式 */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+body:not(.dark) .sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark) .sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark) .sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+

@@ -1,24 +1,24 @@
 <template>
-  <div class="ai-assistant" :class="{ collapsed: collapsed }">
+  <div class="ai-assistant" :class="{ collapsed: internalCollapsed }">
     <!-- 统计卡片 -->
     <div class="stats-card">
       <h3><i class="fas fa-chart-line"></i> 笔记统计</h3>
-      <div class="stats-number">127</div>
+      <div class="stats-number">{{ stats.noteCount }}</div>
       <div class="stats-desc">总笔记数</div>
-      <div class="stats-number">18,542</div>
+      <div class="stats-number">{{ stats.wordCount }}</div>
       <div class="stats-desc">总字数</div>
     </div>
     
     <!-- AI助手功能 -->
     <div class="ai-section">
       <h3><i class="fas fa-robot"></i> AI助手</h3>
-      <button class="ai-action-btn" @click="$emit('generate-summary')">
+      <button class="ai-action-btn" @click="handleGenerateSummary">
         <i class="fas fa-magic"></i> 智能摘要
       </button>
-      <button class="ai-action-btn" @click="$emit('generate-tags')">
+      <button class="ai-action-btn" @click="handleGenerateTags">
         <i class="fas fa-tags"></i> 生成标签
       </button>
-      <button class="ai-action-btn" @click="$emit('find-related')">
+      <button class="ai-action-btn" @click="handleFindRelated">
         <i class="fas fa-search"></i> 相关内容
       </button>
     </div>
@@ -26,33 +26,14 @@
     <!-- AI建议 -->
     <div class="ai-section">
       <h3><i class="fas fa-lightbulb"></i> AI建议</h3>
-      <div class="ai-suggestion">
-        <h4>扩展本节内容</h4>
-        <p>建议在大语言模型部分添加更多关于参数规模和训练数据的细节。</p>
-      </div>
-      <div class="ai-suggestion">
-        <h4>添加相关研究</h4>
-        <p>可以考虑引用最近发表的关于多模态学习的几篇重要论文。</p>
-      </div>
-      <div class="ai-suggestion">
-        <h4>优化结构</h4>
-        <p>建议将"边缘计算与AI部署"部分移到"强化学习的应用拓展"之前。</p>
-      </div>
-      <div class="ai-suggestion">
-        <h4>内容补充</h4>
-        <p>可以在"深度学习基础"章节中添加更多关于反向传播算法的数学推导过程。</p>
-      </div>
-      <div class="ai-suggestion">
-        <h4>案例研究</h4>
-        <p>建议添加一些实际的企业AI应用案例，让内容更加生动具体。</p>
-      </div>
-      <div class="ai-suggestion">
-        <h4>技术更新</h4>
-        <p>考虑更新最新的AI技术发展，包括GPT-4、Claude等大模型的最新进展。</p>
-      </div>
-      <div class="ai-suggestion">
-        <h4>实践指导</h4>
-        <p>可以添加一些动手实践的部分，帮助读者更好地理解AI技术的应用。</p>
+      <div 
+        v-for="(suggestion, index) in suggestions" 
+        :key="index"
+        class="ai-suggestion"
+        @click="handleSuggestionClick(suggestion)"
+      >
+        <h4>{{ suggestion.title }}</h4>
+        <p>{{ suggestion.content }}</p>
       </div>
     </div>
     
@@ -64,7 +45,7 @@
           v-for="tag in suggestedTags" 
           :key="tag"
           class="tag-suggestion"
-          @click="addTag(tag)"
+          @click="handleAddTag(tag)"
         >
           {{ tag }}
         </span>
@@ -74,10 +55,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
+import { useAIAssistant } from './composables/useAIAssistant'
 
 // Props
-defineProps<{
+const props = defineProps<{
   note: any
   collapsed?: boolean
 }>()
@@ -88,34 +70,127 @@ const emit = defineEmits<{
   'generate-summary': []
   'generate-tags': []
   'find-related': []
-  'toggle-collapse': []
+  'toggle-collapse': [collapsed: boolean]
+  'add-tag': [tag: string]
+  'apply-suggestion': [suggestion: any]
 }>()
 
-// 响应式状态
-const suggestedTags = ref([
-  '人工智能',
-  '技术趋势',
-  '机器学习',
-  '深度学习',
-  '自然语言处理',
-  '计算机视觉',
-  '强化学习',
-  '神经网络',
-  '数据科学',
-  '算法优化',
-  '模型训练',
-  '特征工程',
-  '数据预处理',
-  '模型评估',
-  '超参数调优',
-  '集成学习'
-])
+// 使用AIAssistant Composable（不传递 collapsed，因为状态由父组件管理）
+const {
+  suggestedTags,
+  addTag,
+  generateSummary,
+  generateTags,
+  findRelated,
+  init,
+  cleanup
+} = useAIAssistant(false)
 
-// 方法
-const addTag = (tag: string) => {
-  console.log('添加标签:', tag)
-  // 这里可以触发添加标签的逻辑
+// 直接使用 props.collapsed，不维护内部状态
+const internalCollapsed = computed(() => {
+  return Boolean(props.collapsed)
+})
+
+// 统计数据
+const stats = computed(() => ({
+  noteCount: 127,
+  wordCount: '18,542'
+}))
+
+// AI建议数据
+const suggestions = [
+  {
+    id: 1,
+    title: '扩展本节内容',
+    content: '建议在大语言模型部分添加更多关于参数规模和训练数据的细节。',
+    type: 'content-expansion'
+  },
+  {
+    id: 2,
+    title: '添加相关研究',
+    content: '可以考虑引用最近发表的关于多模态学习的几篇重要论文。',
+    type: 'add-research'
+  },
+  {
+    id: 3,
+    title: '优化结构',
+    content: '建议将"边缘计算与AI部署"部分移到"强化学习的应用拓展"之前。',
+    type: 'structure-optimization'
+  },
+  {
+    id: 4,
+    title: '内容补充',
+    content: '可以在"深度学习基础"章节中添加更多关于反向传播算法的数学推导过程。',
+    type: 'content-supplement'
+  },
+  {
+    id: 5,
+    title: '案例研究',
+    content: '建议添加一些实际的企业AI应用案例，让内容更加生动具体。',
+    type: 'case-study'
+  },
+  {
+    id: 6,
+    title: '技术更新',
+    content: '考虑更新最新的AI技术发展，包括GPT-4、Claude等大模型的最新进展。',
+    type: 'tech-update'
+  },
+  {
+    id: 7,
+    title: '实践指导',
+    content: '可以添加一些动手实践的部分，帮助读者更好地理解AI技术的应用。',
+    type: 'practice-guidance'
+  }
+]
+
+// 处理折叠/展开
+const handleToggleCollapse = () => {
+  emit('toggle-collapse', !internalCollapsed.value)
 }
+
+// 处理生成摘要
+const handleGenerateSummary = () => {
+  generateSummary()
+  emit('generate-summary')
+}
+
+// 处理生成标签
+const handleGenerateTags = () => {
+  generateTags()
+  emit('generate-tags')
+}
+
+// 处理查找相关内容
+const handleFindRelated = () => {
+  findRelated()
+  emit('find-related')
+}
+
+// 处理添加标签
+const handleAddTag = (tag: string) => {
+  const addedTag = addTag(tag)
+  emit('add-tag', addedTag)
+}
+
+// 处理建议点击
+const handleSuggestionClick = (suggestion: any) => {
+  console.log('应用建议:', suggestion)
+  emit('apply-suggestion', suggestion)
+}
+
+// 生命周期钩子
+onMounted(() => {
+  init()
+})
+
+onUnmounted(() => {
+  cleanup()
+})
+
+// 暴露方法给父组件
+defineExpose({
+  toggleCollapse: handleToggleCollapse
+})
 </script>
 
 <style scoped>
@@ -149,6 +224,7 @@ const addTag = (tag: string) => {
   border-left: none;
   padding: 0;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .ai-assistant.collapsed > * {
@@ -624,8 +700,14 @@ body.dark .ai-suggestion p {
 }
 
 @media (max-width: 1024px) {
-  .ai-assistant {
+  .ai-assistant:not(.collapsed) {
+    display: flex;
+  }
+  
+  .ai-assistant.collapsed {
     display: none;
   }
 }
+
+
 </style>

@@ -1,0 +1,131 @@
+/* MainLayout 主样式 */
+.container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  max-width: none;
+  background-color: #ffffff;
+  margin-left: 0;
+  padding-left: 0;
+  box-sizing: border-box;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 确保侧边栏在flex布局中正确显示 */
+.container .sidebar {
+  flex-shrink: 0;
+  /* 覆盖sidebar.css中的fixed定位 */
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+body.dark .container {
+  background-color: var(--color-bg-secondary);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 确保内容区域在侧边栏折叠时扩展 */
+.container.sidebar-collapsed .content-area {
+  width: 100%;
+  flex: 1;
+}
+
+/* 当侧边栏折叠时，确保笔记列表和AI助手组件向左扩展 */
+.container.sidebar-collapsed .content-area {
+  transform: translateX(-170px); /* 260px - 90px = 170px */
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 确保折叠按钮跟随移动，通过直接调整位置而不是transform */
+.container.sidebar-collapsed .content-area .notes-collapse-toggle-btn,
+.container.sidebar-collapsed .content-area .ai-collapse-toggle-btn {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 确保编辑器组件能够扩展填充剩余空间 */
+.container.sidebar-collapsed .content-area :deep(.note-editor) {
+  flex: 1;
+}
+
+/* 侧边栏遮罩层 */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* 穿透子组件样式 - 确保子组件正确适应布局 */
+.main-content :deep(.top-bar) {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.content-area :deep(.note-editor) {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 移动端布局 */
+@media (max-width: 768px) {
+  .container {
+    width: 100vw !important;
+    margin-left: 0 !important;
+  }
+  
+  .container.sidebar-collapsed {
+    width: 100vw !important;
+    margin-left: 0 !important;
+  }
+  
+  .main-content {
+    width: 100%;
+  }
+  
+  .content-area {
+    width: 100%;
+  }
+  
+  /* 移动端侧边栏回到fixed定位 */
+  :deep(.sidebar) {
+    position: fixed !important;
+  }
+  
+  /* 移动端不应用transform调整 */
+  .container.sidebar-collapsed .content-area {
+    transform: none;
+  }
+}
+

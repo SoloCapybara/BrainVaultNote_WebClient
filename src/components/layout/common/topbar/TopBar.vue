@@ -101,6 +101,7 @@ defineEmits<{
   padding: 15px 30px;
   background-color: #ffffff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   user-select: none;
   -webkit-user-select: none;
@@ -110,6 +111,8 @@ defineEmits<{
   max-height: 60px; /* 固定最大高度 */
   flex-wrap: nowrap; /* 防止换行 */
   overflow: hidden; /* 隐藏溢出内容 */
+  width: 100%; /* 确保占据100%宽度 */
+  box-sizing: border-box; /* 确保padding包含在宽度内 */
 }
 
 /* 防止所有子元素文字被选中 */
@@ -123,6 +126,7 @@ defineEmits<{
 body.dark .top-bar {
   background-color: var(--color-bg-primary);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 body.dark .user-info h3 {

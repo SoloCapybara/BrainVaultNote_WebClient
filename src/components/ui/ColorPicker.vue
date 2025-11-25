@@ -4,7 +4,7 @@
       <Tooltip :text="tooltipText || ''" placement="top">
         <button 
           class="color-picker-trigger"
-          :class="{ active: isActive }"
+          :class="{ active: isActive || showPicker }"
           :disabled="disabled"
           @click="handleApplyColor"
           :style="triggerStyle"
@@ -13,6 +13,7 @@
           <div 
             v-if="hasColor"
             class="color-indicator"
+            :class="{ 'dark-color': isDarkColor }"
             :style="{ backgroundColor: modelValue }"
           ></div>
         </button>
@@ -40,15 +41,30 @@
         <div class="color-picker-main">
         <!-- 左侧：预设颜色 -->
         <div class="color-picker-presets">
-          <div 
-            v-for="color in presetColors" 
-            :key="color"
-            class="color-preset-item"
-            :class="{ active: modelValue === color, 'gradient-item': isGradient(color) }"
-            :style="isGradient(color) ? { backgroundImage: color } : { backgroundColor: color }"
-            @click="selectColor(color)"
-          >
-            <span v-if="isGradient(color)" class="gradient-label">渐变</span>
+          <!-- 清除选项 - 单独一行 -->
+          <div class="clear-options-row">
+            <div 
+              class="clear-color-button"
+              :class="{ active: isClearActive }"
+              @click="clearColor"
+              :title="type === 'text' ? '清除颜色（恢复默认）' : '清除背景色'"
+            >
+              <i class="fas fa-times"></i>
+              <span>{{ type === 'text' ? '默认颜色' : '无底色' }}</span>
+            </div>
+          </div>
+          <!-- 预设颜色网格 -->
+          <div class="color-presets-grid">
+            <div 
+              v-for="color in presetColors" 
+              :key="color"
+              class="color-preset-item"
+              :class="{ active: modelValue === color, 'gradient-item': isGradient(color) }"
+              :style="isGradient(color) ? { backgroundImage: color } : { backgroundColor: color }"
+              @click="selectColor(color)"
+            >
+              <span v-if="isGradient(color)" class="gradient-label">渐变</span>
+            </div>
           </div>
         </div>
         
@@ -166,6 +182,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   'open': []
   'apply': [] // 应用颜色事件
+  'clear': [] // 清除颜色事件
 }>()
 
 const showPicker = ref(false)
@@ -344,7 +361,33 @@ const isActive = computed(() => {
 
 // 是否有颜色（用于显示颜色指示条）
 const hasColor = computed(() => {
-  return props.modelValue && props.modelValue !== '#000000' && props.modelValue !== '#ffffff'
+  return props.modelValue && props.modelValue !== '' && props.modelValue !== 'transparent'
+})
+
+// 判断颜色是否是深色（需要显示边框或发光效果）
+const isDarkColor = computed(() => {
+  if (!props.modelValue || props.modelValue.startsWith('linear-gradient') || props.modelValue.startsWith('radial-gradient')) {
+    return false
+  }
+  
+  // 检查是否是黑色或深色
+  if (props.modelValue === '#000000' || props.modelValue === '#000') {
+    return true
+  }
+  
+  // 解析 RGB 值
+  const hex = props.modelValue.replace('#', '')
+  if (hex.length === 6) {
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    // 计算亮度（使用相对亮度公式）
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000
+    // 如果亮度小于 128，认为是深色
+    return brightness < 128
+  }
+  
+  return false
 })
 
 // 按钮样式
@@ -523,6 +566,25 @@ const selectColor = (color: string) => {
   emit('update:modelValue', color)
   showPicker.value = false
 }
+
+// 清除颜色
+const clearColor = () => {
+  emit('clear')
+  showPicker.value = false
+}
+
+// 判断清除选项是否激活
+const isClearActive = computed(() => {
+  if (props.type === 'text') {
+    // 文本颜色：检查是否是默认颜色（根据深色/浅色模式）
+    const isDark = document.body.classList.contains('dark')
+    const defaultColor = isDark ? '#ffffff' : '#000000'
+    return props.modelValue === defaultColor || !props.modelValue
+  } else {
+    // 背景颜色：清除状态是透明或没有背景色，或者没有应用背景色
+    return props.modelValue === 'transparent' || !props.modelValue || props.modelValue === ''
+  }
+})
 
 // 饱和度/亮度拖拽
 let isDraggingSaturationLightness = false
@@ -732,11 +794,11 @@ body.dark .color-picker-button-group:hover:not(:has(.color-picker-trigger:disabl
 .color-picker-trigger {
   background: none;
   border: none;
-  font-size: 16px;
-  color: #6c757d;
+  font-size: 15px;
+  color: #495057;
   cursor: pointer;
-  padding: 8px 12px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding: 6px 10px;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -753,8 +815,9 @@ body.dark .color-picker-button-group:hover:not(:has(.color-picker-trigger:disabl
   cursor: not-allowed;
 }
 
-.color-picker-trigger:hover:not(:disabled) {
+.color-picker-trigger:hover:not(:disabled):not(.active) {
   background-color: #f0f4f8;
+  color: #212529;
 }
 
 .color-picker-trigger.active {
@@ -762,13 +825,29 @@ body.dark .color-picker-button-group:hover:not(:has(.color-picker-trigger:disabl
   color: white;
 }
 
+.color-picker-trigger.active:hover {
+  background-color: var(--primary-color);
+  color: white;
+  opacity: 0.9;
+}
+
 .color-picker-trigger.active .color-indicator {
   border-color: white;
 }
 
-body.dark .color-picker-trigger:hover:not(:disabled) {
-  background-color: #333333;
+body.dark .color-picker-trigger {
+  color: #a0a7b5;
+}
+
+body.dark .color-picker-trigger:hover:not(:disabled):not(.active) {
+  background-color: #2a2f36;
   color: #ffffff;
+}
+
+body.dark .color-picker-trigger.active:hover {
+  background-color: var(--primary-color);
+  color: white;
+  opacity: 0.9;
 }
 
 .color-indicator {
@@ -780,20 +859,36 @@ body.dark .color-picker-trigger:hover:not(:disabled) {
   height: 2px;
   border-radius: 1px;
   border: 1px solid rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+/* 深色颜色指示条：添加白边框和发光效果 */
+.color-indicator.dark-color {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.6),
+              0 0 6px rgba(255, 255, 255, 0.4),
+              inset 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 body.dark .color-indicator {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+body.dark .color-indicator.dark-color {
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8),
+              0 0 8px rgba(255, 255, 255, 0.6),
+              inset 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
 .color-picker-dropdown-trigger {
   background: none;
   border: none;
   font-size: 10px;
-  color: #6c757d;
+  color: #495057;
   cursor: pointer;
-  padding: 8px 8px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding: 6px 8px;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -805,12 +900,13 @@ body.dark .color-indicator {
 }
 
 .color-picker-dropdown-trigger:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.color-picker-dropdown-trigger:hover:not(:disabled) {
+.color-picker-dropdown-trigger:hover:not(:disabled):not(.active) {
   background-color: #f0f4f8;
+  color: #212529;
 }
 
 .color-picker-dropdown-trigger.active {
@@ -819,17 +915,30 @@ body.dark .color-indicator {
   border-left-color: rgba(255, 255, 255, 0.2);
 }
 
-body.dark .color-picker-dropdown-trigger {
-  border-left-color: #3a4152;
+.color-picker-dropdown-trigger.active:hover {
+  background-color: var(--primary-color);
+  color: white;
+  opacity: 0.9;
 }
 
-body.dark .color-picker-dropdown-trigger:hover:not(:disabled) {
-  background-color: #333333;
+body.dark .color-picker-dropdown-trigger {
+  border-left-color: #3a4152;
+  color: #a0a7b5;
+}
+
+body.dark .color-picker-dropdown-trigger:hover:not(:disabled):not(.active) {
+  background-color: #2a2f36;
   color: #ffffff;
 }
 
 body.dark .color-picker-dropdown-trigger.active {
   border-left-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark .color-picker-dropdown-trigger.active:hover {
+  background-color: var(--primary-color);
+  color: white;
+  opacity: 0.9;
 }
 
 .color-picker-dropdown {
@@ -916,12 +1025,78 @@ body.dark .color-picker-dropdown {
 }
 
 .color-picker-presets {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px;
   border-right: 1px solid var(--color-border);
   flex-shrink: 0;
+}
+
+/* 清除选项行 */
+.clear-options-row {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.clear-color-button {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: #f5f5f5;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-color-button:hover {
+  background-color: #e8e8e8;
+  border-color: #bbb;
+}
+
+.clear-color-button.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.clear-color-button i {
+  font-size: 12px;
+}
+
+.clear-color-button span {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+body.dark .clear-color-button {
+  background-color: #2a2f36;
+  border-color: #3a4152;
+  color: #a0a7b5;
+}
+
+body.dark .clear-color-button:hover {
+  background-color: #333333;
+  border-color: #4a5568;
+}
+
+body.dark .clear-color-button.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+/* 预设颜色网格 */
+.color-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 
 body.dark .color-picker-presets {
@@ -982,6 +1157,7 @@ body.dark .color-picker-presets {
 .color-preset-item.gradient-item.active .gradient-label {
   color: white;
 }
+
 
 .color-picker-custom-section {
   flex: 1;

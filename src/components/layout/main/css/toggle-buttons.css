@@ -1,0 +1,146 @@
+/* 折叠/展开箭头按钮样式 */
+.notes-collapse-toggle-btn,
+.ai-collapse-toggle-btn {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 200; /* 提高z-index确保按钮在最上层 */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: var(--color-text-primary);
+  font-size: 18px;
+  pointer-events: auto; /* 确保按钮可点击 */
+}
+
+.notes-collapse-toggle-btn:hover,
+.ai-collapse-toggle-btn:hover {
+  color: var(--primary-color);
+  transform: translateY(-50%) scale(1.2);
+}
+
+.notes-collapse-toggle-btn:active,
+.ai-collapse-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* 笔记列表折叠按钮 */
+.notes-collapse-toggle-btn {
+  left: 320px;
+}
+
+.notes-collapse-toggle-btn.collapsed {
+  left: -15px;
+}
+
+/* AI助手折叠按钮 */
+.ai-collapse-toggle-btn {
+  right: 280px;
+  z-index: 200; /* 统一使用z-index: 200确保按钮在最上层 */
+}
+
+.ai-collapse-toggle-btn.collapsed {
+  right: 0px;
+}
+
+/* 侧边栏折叠且AI助手也折叠时的位置 */
+.container.sidebar-collapsed .ai-collapse-toggle-btn.collapsed {
+  right: calc(0px - 170px); /* 0px - 170px = -170px */
+}
+
+/* 确保按钮在侧边栏折叠状态下的点击区域 */
+.container.sidebar-collapsed .ai-collapse-toggle-btn {
+  /* 不使用transform，而是直接调整位置 */
+  right: calc(280px - 170px); /* 280px - 170px = 110px */
+}
+
+body.dark .notes-collapse-toggle-btn,
+body.dark .ai-collapse-toggle-btn {
+  color: var(--color-text-primary);
+}
+
+body.dark .notes-collapse-toggle-btn:hover,
+body.dark .ai-collapse-toggle-btn:hover {
+  color: var(--primary-color);
+}
+
+/* 宽屏模式（>1024px）：显示箭头按钮 */
+@media (min-width: 1025px) {
+  .notes-collapse-toggle-btn {
+    display: flex;
+    left: 320px;
+  }
+  
+  .notes-collapse-toggle-btn.collapsed {
+    left: -15px;
+  }
+  
+  .ai-collapse-toggle-btn {
+    display: flex !important;
+    right: 280px;
+  }
+  
+  .ai-collapse-toggle-btn.collapsed {
+    right: 0px;
+  }
+  
+  /* 侧边栏折叠时，宽屏模式下的AI按钮位置 */
+  .container.sidebar-collapsed .ai-collapse-toggle-btn {
+    right: calc(280px - 170px); /* 280px - 170px = 110px */
+  }
+  
+  /* 侧边栏折叠且AI助手也折叠时的位置 */
+  .container.sidebar-collapsed .ai-collapse-toggle-btn.collapsed {
+    right: calc(0px - 170px); /* 0px - 170px = -170px */
+  }
+}
+
+/* 中屏模式（769px - 1024px） */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .notes-collapse-toggle-btn {
+    display: flex !important;
+    left: 320px;
+  }
+  
+  .notes-collapse-toggle-btn.collapsed {
+    left: -15px;
+  }
+  
+  .ai-collapse-toggle-btn {
+    display: flex !important;
+    right: 240px;
+    z-index: 200; /* 统一使用z-index: 200确保按钮在最上层 */
+    pointer-events: auto !important; /* 确保按钮可点击 */
+  }
+  
+  .ai-collapse-toggle-btn.collapsed {
+    right: 0px !important; /* 使用!important确保样式覆盖其他规则 */
+  }
+  
+  /* 侧边栏折叠时，中屏模式下的AI按钮位置 */
+  .container.sidebar-collapsed .ai-collapse-toggle-btn {
+    right: calc(240px - 170px); /* 240px - 170px = 70px */
+    pointer-events: auto !important; /* 确保按钮可点击 */
+  }
+  
+  /* 侧边栏折叠且AI助手也折叠时的位置 */
+  .container.sidebar-collapsed .ai-collapse-toggle-btn.collapsed {
+    right: calc(0px - 170px); /* 0px - 170px = -170px */
+  }
+}
+
+/* 窄屏模式（≤768px）：隐藏箭头按钮 */
+@media (max-width: 768px) {
+  .notes-collapse-toggle-btn,
+  .ai-collapse-toggle-btn {
+    display: none !important;
+  }
+}
+

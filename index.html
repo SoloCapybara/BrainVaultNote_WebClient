@@ -15,38 +15,79 @@
           const savedTheme = localStorage.getItem('theme');
           console.log('读取到的主题:', savedTheme); // 调试用
           
-          // 根据保存的主题立即设置背景色和内联样式
-          if (savedTheme === 'dark') {
-            // 深色模式 - 立即设置，优先级最高
-            const darkStyle = document.createElement('style');
-            darkStyle.textContent = `
-              html, body {
-                background-color: #000000 !important;
-                color: #ffffff !important;
-              }
-            `;
-            document.head.appendChild(darkStyle);
-            
-            document.documentElement.style.backgroundColor = '#000000';
-            document.documentElement.style.color = '#ffffff';
-            document.body.style.backgroundColor = '#000000';
-            document.body.style.color = '#ffffff';
-            document.body.classList.add('dark');
+          // 确保 document.documentElement 和 document.body 存在
+          if (!document.documentElement || !document.body) {
+            // 如果元素还不存在，等待 DOM 加载完成
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', function() {
+                applyTheme(savedTheme);
+              });
+            } else {
+              applyTheme(savedTheme);
+            }
           } else {
-            // 浅色模式（包括未设置时，默认浅色）
-            document.documentElement.style.backgroundColor = '#ffffff';
-            document.documentElement.style.color = '#333333';
-            document.body.style.backgroundColor = '#ffffff';
-            document.body.style.color = '#333333';
-            document.body.classList.remove('dark');
+            applyTheme(savedTheme);
+          }
+          
+          function applyTheme(theme) {
+            try {
+              // 确保所有元素都存在
+              if (!document.documentElement || !document.body || !document.head) {
+                return;
+              }
+              
+              // 根据保存的主题立即设置背景色和内联样式
+              if (theme === 'dark') {
+                // 深色模式 - 立即设置，优先级最高
+                const darkStyle = document.createElement('style');
+                darkStyle.textContent = `
+                  html, body {
+                    background-color: #000000 !important;
+                    color: #ffffff !important;
+                  }
+                `;
+                document.head.appendChild(darkStyle);
+                
+                if (document.documentElement) {
+                  document.documentElement.style.backgroundColor = '#000000';
+                  document.documentElement.style.color = '#ffffff';
+                }
+                if (document.body) {
+                  document.body.style.backgroundColor = '#000000';
+                  document.body.style.color = '#ffffff';
+                  document.body.classList.add('dark');
+                }
+              } else {
+                // 浅色模式（包括未设置时，默认浅色）
+                if (document.documentElement) {
+                  document.documentElement.style.backgroundColor = '#ffffff';
+                  document.documentElement.style.color = '#333333';
+                }
+                if (document.body) {
+                  document.body.style.backgroundColor = '#ffffff';
+                  document.body.style.color = '#333333';
+                  document.body.classList.remove('dark');
+                }
+              }
+            } catch (e) {
+              console.error('应用主题错误:', e);
+            }
           }
         } catch (e) {
           console.error('主题加载错误:', e);
           // localStorage 可能不可用（隐私模式等），使用默认浅色
-          document.documentElement.style.backgroundColor = '#ffffff';
-          document.documentElement.style.color = '#333333';
-          document.body.style.backgroundColor = '#ffffff';
-          document.body.style.color = '#333333';
+          try {
+            if (document.documentElement) {
+              document.documentElement.style.backgroundColor = '#ffffff';
+              document.documentElement.style.color = '#333333';
+            }
+            if (document.body) {
+              document.body.style.backgroundColor = '#ffffff';
+              document.body.style.color = '#333333';
+            }
+          } catch (err) {
+            // 忽略错误
+          }
         }
       })();
     </script>

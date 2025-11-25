@@ -1,0 +1,59 @@
+/* 响应式布局样式 */
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .content-area {
+    flex-wrap: wrap;
+  }
+}
+
+/* 中屏模式（769px - 1024px）：保持横向布局，显示两栏（笔记列表+编辑器 或 编辑器+AI栏） */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .content-area {
+    flex-direction: row;
+  }
+  
+  /* 中屏模式下：如果笔记列表展开且AI栏也展开，隐藏AI栏 */
+  .content-area.mid-screen .notes-list:not(.collapsed) ~ .ai-assistant:not(.collapsed) {
+    display: none !important;
+  }
+  
+  /* 中屏模式下：如果AI栏展开且笔记列表也展开，隐藏笔记列表 */
+  .content-area.mid-screen .ai-assistant:not(.collapsed) ~ .notes-list:not(.collapsed) {
+    display: none !important;
+  }
+  
+  /* 中屏模式下，如果笔记列表收起，确保AI栏显示 */
+  .content-area.mid-screen .notes-list.collapsed ~ .ai-assistant {
+    display: flex !important;
+  }
+  
+  /* 中屏模式下，如果AI栏收起，确保笔记列表显示 */
+  .content-area.mid-screen .ai-assistant.collapsed ~ .notes-list {
+    display: flex !important;
+  }
+}
+
+/* 窄屏模式（≤768px）：垂直布局，只显示笔记列表 */
+@media (max-width: 768px) {
+  .content-area {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  /* 窄屏模式下，笔记列表占据全部宽度 */
+  .content-area > :not(.notes-list) {
+    display: none !important;
+  }
+  
+  .content-area .notes-list {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    flex: 1;
+  }
+}
+
+/* 当侧边栏收起时，editor 自动占据释放的空间 */
+/* 笔记列表保持原有宽度，editor 通过 flex: 1 自动扩展 */
+
