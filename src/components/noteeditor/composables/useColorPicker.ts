@@ -1,7 +1,8 @@
-import { ref, computed } from 'vue'
+import { ref, computed} from 'vue'
 import type { Editor } from '@tiptap/vue-3'
+import type { Ref } from 'vue'
 
-export function useColorPicker(editor: { value: Editor | null }, isTitleFocused: { value: boolean }) {
+export function useColorPicker(editor: Ref<Editor | null>, isTitleFocused: Ref<boolean>) {
   // 初始化时根据模式设置默认颜色
   const getInitialTextColor = () => {
     return document.body.classList.contains('dark') ? '#ffffff' : '#000000'

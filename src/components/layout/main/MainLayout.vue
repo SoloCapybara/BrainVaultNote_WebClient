@@ -49,7 +49,7 @@
           :key="'notes-toggle-btn'"
           class="notes-collapse-toggle-btn"
           :class="{ collapsed: notesListCollapsed }"
-          @click="toggleNotesList"
+          @click="handleNotesToggleClick"
           title="收起/展开笔记列表"
         >
           <i class="fas" :class="notesListCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
@@ -145,6 +145,21 @@ const handleNoteSelected = (note: MockNote) => {
   }
 }
 
+const testClick = ()=>{
+  console.log("测试点击")
+}
+
+//处理笔记列表折叠按钮点击
+const handleNotesToggleClick = (event:MouseEvent) => {
+  console.log("笔记折叠按钮被点击了")
+  console.log(notesListCollapsed.value)
+  event.stopPropagation()
+  event.preventDefault()
+  nextTick(()=>{
+    toggleNotesList()
+  })
+}
+
 const handleSearch = (query: string) => {
   console.log('搜索:', query)
 }
@@ -162,8 +177,6 @@ const aiToggleBtnClass = computed(() => {
     collapsed: aiAssistantCollapsed.value
   }
 })
-
-
 
 // 处理AI助手生成摘要
 const handleAIGenerateSummary = () => {
@@ -212,6 +225,13 @@ watch(() => activeNote.value, () => {
   if (window.innerWidth <= 768) {
     showMobileSidebar.value = false
   }
+})
+
+watch(notesListCollapsed,(newVal)=>{
+  console.log("📊 notesListCollapsed 状态变化:", newVal)
+})
+watch(aiAssistantCollapsed, (newVal) => {
+  console.log("📊 aiAssistantCollapsed 状态变化:", newVal)
 })
 
 // 初始化

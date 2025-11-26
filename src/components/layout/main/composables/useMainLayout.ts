@@ -201,6 +201,7 @@ export function useMainLayout() {
 
   // 初始化
   const init = () => {
+    isMounted.value = true
     loadSidebarState()
     loadCollapsedStates()
     if (window.innerWidth <= 768) {
@@ -212,7 +213,7 @@ export function useMainLayout() {
 
   // 清理
   const cleanup = () => {
-    isMounted = false
+    isMounted.value = false
     window.removeEventListener('resize', handleResize)
   }
 

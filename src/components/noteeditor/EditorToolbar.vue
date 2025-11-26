@@ -5,8 +5,8 @@
       <Tooltip text="撤销" placement="top">
         <button 
           class="toolbar-btn" 
-          :disabled="isTitleFocused || !editor?.can().undo()"
-          @click="editor?.chain().focus().undo().run()"
+          :disabled="!editor || isTitleFocused || !editor.can().undo()"
+          @click="editor && editor.chain().focus().undo().run()"
         >
           <i class="fas fa-undo"></i>
         </button>
@@ -14,8 +14,8 @@
       <Tooltip text="重做" placement="top">
         <button 
           class="toolbar-btn" 
-          :disabled="isTitleFocused || !editor?.can().redo()"
-          @click="editor?.chain().focus().redo().run()"
+          :disabled="!editor || isTitleFocused || !editor.can().redo()"
+          @click="editor && editor.chain().focus().redo().run()"
         >
           <i class="fas fa-redo"></i>
         </button>
@@ -70,8 +70,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('bold') }"
-          :disabled="isTitleFocused"
-          @click="editor?.chain().focus().toggleBold().run()"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && editor.chain().focus().toggleBold().run()"
         >
           <i class="fas fa-bold"></i>
         </button>
@@ -80,8 +80,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('italic') }"
-          :disabled="isTitleFocused"
-          @click="editor?.chain().focus().toggleItalic().run()"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && editor.chain().focus().toggleItalic().run()"
         >
           <i class="fas fa-italic"></i>
         </button>
@@ -90,8 +90,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('underline') }"
-          :disabled="isTitleFocused"
-          @click="editor?.chain().focus().toggleUnderline().run()"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && editor.chain().focus().toggleUnderline().run()"
         >
           <i class="fas fa-underline"></i>
         </button>
@@ -100,8 +100,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('strike') }"
-          :disabled="isTitleFocused"
-          @click="editor?.chain().focus().toggleStrike().run()"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && editor.chain().focus().toggleStrike().run()"
         >
           <i class="fas fa-strikethrough"></i>
         </button>
@@ -148,8 +148,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('bulletList') }"
-          :disabled="isTitleFocused"
-          @click="editor?.chain().focus().toggleBulletList().run()"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && editor.chain().focus().toggleBulletList().run()"
         >
           <i class="fas fa-list-ul"></i>
         </button>
@@ -158,8 +158,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('orderedList') }"
-          :disabled="isTitleFocused"
-          @click="editor?.chain().focus().toggleOrderedList().run()"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && editor.chain().focus().toggleOrderedList().run()"
         >
           <i class="fas fa-list-ol"></i>
         </button>
@@ -192,8 +192,8 @@
         <button 
           class="toolbar-btn" 
           :class="{ active: editor?.isActive('link') }"
-          :disabled="isTitleFocused"
-          @click="setLink"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && setLink()"
         >
           <i class="fas fa-link"></i>
         </button>
@@ -201,8 +201,8 @@
       <Tooltip text="分割线" placement="top">
         <button 
           class="toolbar-btn"
-          :disabled="isTitleFocused"
-          @click="insertHorizontalRule"
+          :disabled="!editor || isTitleFocused"
+          @click="editor && insertHorizontalRule()"
         >
           <i class="fas fa-minus"></i>
         </button>
@@ -258,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, toRef, watch} from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import Tooltip from '../ui/Tooltip.vue'
 import Dropdown from '../ui/Dropdown.vue'
@@ -278,20 +278,15 @@ const props = defineProps<{
 }>()
 
 // 使用 composables
-const editorRef = ref<Editor | null>((props.editor || null) as Editor | null)
+const editorRef = ref<Editor | null> (props.editor || null)
+const isTitleFocusedRef = toRef(props,'isTitleFocused')
 watch(() => props.editor, (newEditor) => {
-  editorRef.value = (newEditor || null) as Editor | null
+  editorRef.value = newEditor || null
 })
 
-const toolbar = useToolbar(
-  { value: editorRef as any },
-  { value: props.isTitleFocused }
-)
+const toolbar = useToolbar(editorRef,isTitleFocusedRef)
 
-const colorPicker = useColorPicker(
-  { value: editorRef as any },
-  { value: props.isTitleFocused }
-)
+const colorPicker = useColorPicker(editorRef,isTitleFocusedRef)
 
 // 暴露 toolbar 和 colorPicker 的方法和状态
 const {

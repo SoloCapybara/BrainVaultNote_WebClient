@@ -18,6 +18,7 @@ import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import type { Ref } from 'vue'
 import type { Editor as TiptapEditor } from '@tiptap/vue-3'
 
+
 export function useEditorSetup(
   noteContent: Ref<string>,
   isMarkdownMode: Ref<boolean>,
@@ -31,6 +32,7 @@ export function useEditorSetup(
       mousedown?: (view: any, event: MouseEvent) => boolean | void
       beforeinput?: (view: any, event: InputEvent) => boolean | void
     }
+    onCreate():(editorInstance: TiptapEditor) => void
   }
 ) {
   const editor = useEditor({
@@ -82,6 +84,11 @@ export function useEditorSetup(
       
       if (callbacks.onUpdate) {
         callbacks.onUpdate(editorInstance as TiptapEditor)
+      }
+    },
+    onCreate:({editor:editorInstance}) => {
+      if (callbacks.onCreate) {
+        callbacks.onCreate(editorInstance as TiptapEditor)
       }
     },
     editorProps: {

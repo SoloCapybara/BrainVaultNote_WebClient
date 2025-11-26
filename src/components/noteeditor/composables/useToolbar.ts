@@ -1,7 +1,10 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch} from 'vue'
+import type { Ref } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 
-export function useToolbar(editor: { value: Editor | null }, isTitleFocused: { value: boolean }) {
+
+
+export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boolean>) {
   // 字体大小工具
   const fontSizeDropdownOpen = ref(false)
   const currentFontSize = ref<string>('16px')
