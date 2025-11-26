@@ -258,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef, watch} from 'vue'
+import { ref, toRef, watch,type Ref} from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import Tooltip from '../ui/Tooltip.vue'
 import Dropdown from '../ui/Dropdown.vue'
@@ -284,9 +284,8 @@ watch(() => props.editor, (newEditor) => {
   editorRef.value = newEditor || null
 })
 
-const toolbar = useToolbar(editorRef,isTitleFocusedRef)
-
-const colorPicker = useColorPicker(editorRef,isTitleFocusedRef)
+const toolbar = useToolbar(editorRef as Ref<Editor | null>, isTitleFocusedRef as Ref<boolean>)
+const colorPicker = useColorPicker(editorRef as Ref<Editor | null>, isTitleFocusedRef as Ref<boolean>)
 
 // 暴露 toolbar 和 colorPicker 的方法和状态
 const {

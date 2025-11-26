@@ -1,14 +1,19 @@
 .notes-list {
   width: 340px;
-  min-width: 300px;
-  max-width: 470px;
+  min-width: 340px;
+  max-width: 340px;
   max-height: calc(100vh - 60px);
   background-color: var(--color-bg-primary);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transoform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0s,
+              width 0.4s cubic-bezier(0.4,0,0.2,1) 0s,
+              min-width 0.4s cubic-bezier(0.4,0,0.2,1) 0s,
+              max-width 0.4s cubic-bezier(0.4,0,0.2,1) 0s,
+              border 0.3s ease 0.1s;
   flex-shrink: 0;
+  flex-grow: 0;
   box-sizing: border-box;
   position: relative;
   z-index: 1;
@@ -22,13 +27,24 @@
 }
 
 .notes-list.collapsed {
+  transform: translateX(-100%);
   width: 0 !important;
   min-width: 0 !important;
   max-width: 0 !important;
   border-right: none;
   overflow: hidden;
-  transform: translateX(-100%);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0s,
+              width 0.3s cubic-bezier(0.4,0,0.2,1) 0.1s,
+              min-width 0.3s cubic-bezier(0.4,0,0.2,1) 0.1s,
+              max-width 0.3s cubic-bezier(0.4,0,0.2,1) 0.1s,
+              border 0.2s ease 0s;
+}
+
+.notes-list:not(.collapsed){
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1) 0s,
+              min-width 0.4s cubic-bezier(0.4,0,0.2,1) 0s,
+              max-width 0.4s cubic-bezier(0.4,0,0.2,1) 0s,
+              border 0.3 ease 0.1s;
 }
 
 .notes-list.collapsed .notes-header,
