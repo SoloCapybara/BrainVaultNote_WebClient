@@ -39,6 +39,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick, onMounted, onBeforeUnmount, unref, toRef } from 'vue'
+import type { Ref } from 'vue'
 import Message from '../../utils/message'
 import type { Editor } from '@tiptap/vue-3'
 import ContextMenu from '../ui/ContextMenu.vue'
@@ -58,11 +59,20 @@ const props = defineProps<{
 }>()
 
 // 统一处理 note 可能是 ref 的情况
+// 使用 toRef 创建响应式引用，确保 noteProp 是响应式的
+// toRef接收一个对象和属性名，返回一个响应式引用
 const noteProp = toRef(props, 'note')
+// 使用 computed 计算 resolvedNote，确保 resolvedNote 是响应式的
+// unref 是 Vue 提供的一个小工具函数，用来“解包”一个 ref：
+// 1.noteProp 是 toRef(props, 'note') 得到的 ref，但它的 value 可能还是另一个 ref（因为父组件传进来的 note 就是 store 的 ref）。
+// 2.unref(noteProp.value) 会自动解包，如果 noteProp.value 是 ref，则返回它的 value；如果不是 ref，则直接返回原值。
 const resolvedNote = computed(() => unref(noteProp.value))
 
+// 定义 emit 事件
 const emit = defineEmits<{
+  // 保存笔记
   'save': [note: any]
+  // 更新笔记
   'update': [note: any]
 }>()
 
@@ -79,13 +89,11 @@ const { contentWordCount, contentPunctuationCount, contentLineCount, updateWordC
 
 // 编辑器实例
 const editorRef = ref<Editor | null>(null)
-const isTitleFocusedRef = { get value() { return isTitleFocused.value }, set value(v: boolean) { isTitleFocused.value = v } }
-const isMarkdownModeRef = { get value() { return isMarkdownMode.value }, set value(v: boolean) { isMarkdownMode.value = v } }
-const markdownSourceRef = { get value() { return markdownSource.value }, set value(v: string) { markdownSource.value = v } }
-const colorPicker = useColorPicker({ value: editorRef as any }, isTitleFocusedRef)
-const toolbar = useToolbar({ value: editorRef as any }, isTitleFocusedRef)
-const keyboard = useKeyboard({ value: editorRef as any }, isTitleFocusedRef)
-const contextMenu = useContextMenu({ value: editorRef as any }, isMarkdownModeRef, markdownSourceRef)
+const editorRefProxy = editorRef as unknown as Ref<Editor | null>
+const colorPicker = useColorPicker(editorRefProxy, isTitleFocused)
+const toolbar = useToolbar(editorRefProxy, isTitleFocused)
+const keyboard = useKeyboard(editorRefProxy, isTitleFocused)
+const contextMenu = useContextMenu(editorRefProxy, isMarkdownMode, markdownSource)
 // 供模板安全获取 Editor 实例
 const getEditor = () => {
   if(!isEditorInitialized.value || !editorRef.value){
@@ -124,9 +132,11 @@ const initializeEditor = () => {
         toolbar.updateHeadingFromSelection(editorInstance)
         toolbar.updateTextAlignFromSelection(editorInstance)
       },
-      onCreate: () => (editorInstance) => {
+      onCreate: (editorInstance) => {
         isEditorInitialized.value = true
-        console.log("编辑器初始化完成"+editorInstance)
+        editorRef.value = editorInstance
+        console.log('编辑器初始化完成', editorInstance)
+        loadNoteToEditor(unref(resolvedNote.value))
       },
       handleKeyDown: keyboard.createHandleKeyDown(),
       handleDOMEvents: keyboard.createHandleDOMEvents()
@@ -135,6 +145,9 @@ const initializeEditor = () => {
   
   editorRef.value = editorInstance
 }
+
+//直接调用初始化
+initializeEditor()
 
 // 计算属性
 const currentNote = computed(() => {
@@ -330,22 +343,32 @@ const resetEditorState = () => {
   }
 }
 
+//加载笔记到编辑器
+//形参赋值给targetNote，如果targetNote为空，则使用resolvedNote.value作为默认值
 const loadNoteToEditor = (targetNote = resolvedNote.value) => {
+  console.log("加载笔记到编辑器", targetNote)
+  // 如果笔记对象为空，则重置编辑器状态
   if (!targetNote) {
     resetEditorState()
     return
   }
 
+  // 设置笔记标题
   noteTitle.value = targetNote.title || ''
+  // 设置笔记内容
   const content = targetNote.content || ''
+  // 设置笔记类型(默认富文本)
   const noteType = targetNote.noteType || 'richText'
+  // 设置Markdown模式
   isMarkdownMode.value = noteType === 'markdown'
 
+  // 如果笔记类型为Markdown，则设置Markdown源
   if (noteType === 'markdown') {
     markdownSource.value = content || ''
     return
   }
 
+  // 设置富文本内容
   const setRichTextContent = (htmlContent: string) => {
     noteContent.value = htmlContent
     const editor = getEditor()
@@ -355,6 +378,7 @@ const loadNoteToEditor = (targetNote = resolvedNote.value) => {
     markdownSource.value = turndownService.turndown(htmlContent)
   }
 
+  // 应用内容到编辑器
   const applyContent = () => {
     const editor = getEditor()
     if(!editor || !editor.commands){
@@ -381,9 +405,6 @@ const loadNoteToEditor = (targetNote = resolvedNote.value) => {
 
 // 生命周期
 onMounted(() => {
-  nextTick(()=>{
-    initializeEditor()
-  })
   window.addEventListener('resize', handleResize)
   document.addEventListener('keydown', handleKeyDown, true)
   
@@ -395,11 +416,11 @@ onMounted(() => {
       const loadInterval = setInterval(()=>{
         if(isEditorInitialized.value){
           clearInterval(loadInterval)
-          if(!noteTitle.value && resolvedNote.value.title){
+          if (!noteTitle.value && resolvedNote.value.title) {
             noteTitle.value = resolvedNote.value.title
           }
-          const content = resolvedNote.value.title || ''
-          if(content && !noteContent.value){
+          const content = resolvedNote.value.content || ''
+          if ((content || resolvedNote.value.noteType === 'markdown') && !noteContent.value) {
             loadNoteToEditor(resolvedNote.value)
           }
         }
@@ -477,31 +498,27 @@ onBeforeUnmount(() => {
 
 // 监听笔记对象变化并加载
 watch(noteProp, (note) => {
+  console.log("检测到传入新笔记，准备调用loadNoteToEditor函数加载笔记内容到编辑器，传入笔记对象：" + note)
+  // 如果笔记对象为空，则重置编辑器状态
   if (!note) {
     resetEditorState()
     return
   }
-  // 确保编辑器已经初始化后再加载内容
-  // if (!editorRef.value) {
-  //   nextTick(() => {
-  //     if (editorRef.value) {
-  //       loadNoteToEditor(unref(note))
-  //     }
-  //   })
-  // } else {
-  // loadNoteToEditor(unref(note))
-  // }
-  if(!isEditorInitialized.value){
-    const checkInterval = setInterval(()=>{
-      if(isEditorInitialized.value){
+  // 创建一个匿名函数 load，用于加载笔记内容到编辑器
+  const load = () => loadNoteToEditor(unref(note))
+
+  // 如果编辑器未初始化，则设置一个检查间隔，直到编辑器初始化完成后再加载笔记内容
+  if (!isEditorInitialized.value) {
+    const checkInterval = setInterval(() => {
+      if (isEditorInitialized.value) {
         clearInterval(checkInterval)
-        loadNoteToEditor(unref(note))
+        load()
       }
-    },100)
-  }else{
-    loadNoteToEditor(unref(note))
+    }, 100)
+  } else {
+    load()
   }
-}, { immediate: false })
+}, { immediate: true })
 
 // 监听编辑器内容变化
 watch(() => {

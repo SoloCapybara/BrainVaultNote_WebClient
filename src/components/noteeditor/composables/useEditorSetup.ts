@@ -32,7 +32,7 @@ export function useEditorSetup(
       mousedown?: (view: any, event: MouseEvent) => boolean | void
       beforeinput?: (view: any, event: InputEvent) => boolean | void
     }
-    onCreate():(editorInstance: TiptapEditor) => void
+    onCreate?:(editorInstance: TiptapEditor) => void
   }
 ) {
   const editor = useEditor({
@@ -41,66 +41,76 @@ export function useEditorSetup(
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
+        underline:false, //false,关闭内置Underline
+        link:false, //false,关闭内置Link
+        horizontalRule:false, //false,关闭内置HorizontalRule
       }),
-      Underline,
-      TextStyle,
-      Color,
+      Underline, //下划线
+      TextStyle, //文本样式
+      Color, //颜色
       Highlight.configure({
         multicolor: true,
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      GradientText,
-      FontSize,
-      CollapsibleHeading,
-      HorizontalRule,
+      GradientText, //渐变文本(扩展自定义)
+      FontSize, //字体大小(扩展自定义)
+      CollapsibleHeading, //可折叠标题(扩展自定义)
+      HorizontalRule, //水平线
       Image.configure({
-        inline: true,
-        allowBase64: true,
-      }),
+        inline: true, //是否内联
+        allowBase64: true, //是否允许Base64编码
+      }), //图片
       Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          target: '_blank',
-          rel: 'noopener noreferrer',
+        openOnClick: false, //是否点击打开
+        HTMLAttributes: { //HTML属性
+          target: '_blank', //目标
+          rel: 'noopener noreferrer', //关系
         },
+      }), //链接
+      Table.configure({  //表格
+        resizable: true, //是否可调整大小
       }),
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      TableHeader,
-      TableCell,
+      TableRow, //表格行
+      TableHeader, //表格头
+      TableCell, //表格单元格
     ],
-    content: '',
+    content: '', //内容
     onUpdate: ({ editor: editorInstance }) => {
+      //获取HTML内容
       const html = editorInstance.getHTML()
+      //设置笔记内容
       noteContent.value = html
-      
+      //如果笔记类型不为Markdown，则设置Markdown源
       if (!isMarkdownMode.value) {
         markdownSource.value = turndownService.turndown(html)
       }
-      
+      //如果回调函数存在，则调用回调函数
       if (callbacks.onUpdate) {
         callbacks.onUpdate(editorInstance as TiptapEditor)
       }
     },
+    //创建编辑器
     onCreate:({editor:editorInstance}) => {
+      //如果回调函数存在，则调用回调函数
       if (callbacks.onCreate) {
-        callbacks.onCreate(editorInstance as TiptapEditor)
+        callbacks.onCreate?.(editorInstance as TiptapEditor)
       }
     },
+    //编辑器属性
     editorProps: {
-      attributes: {
+      attributes: { //属性
         class: 'tiptap-content',
-        'data-placeholder': '开始输入笔记内容...',
-        style: '--selection-background: rgba(138, 43, 226, 0.2); --selection-color: inherit;',
+        'data-placeholder': '开始输入笔记内容...', //占位符
+        style: '--selection-background: rgba(138, 43, 226, 0.2); --selection-color: inherit;', //样式
       },
-      handleDOMEvents: callbacks.handleDOMEvents || {},
-      handleKeyDown: callbacks.handleKeyDown || (() => false),
+      handleDOMEvents: callbacks.handleDOMEvents || {}, //DOM事件
+      handleKeyDown: callbacks.handleKeyDown || (() => false), //键盘事件
     },
+    //选择更新
     onSelectionUpdate: ({ editor: editorInstance }) => {
+      //如果回调函数存在，则调用回调函数
       if (callbacks.onSelectionUpdate) {
         callbacks.onSelectionUpdate(editorInstance as TiptapEditor)
       }

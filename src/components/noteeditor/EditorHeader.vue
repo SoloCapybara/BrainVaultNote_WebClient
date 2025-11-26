@@ -95,9 +95,18 @@ defineExpose({
 }
 
 .title-word-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   font-size: 12px;
   color: var(--color-text-secondary);
   white-space: nowrap;
+  user-select: none;
 }
 
 @media (max-width: 1400px) {

@@ -193,8 +193,8 @@ defineExpose({
 })
 </script>
 
-<style scoped>
-.ai-assistant {
+<style scoped src="./css/AIAssistant.css"></style>
+<!-- .ai-assistant {
   width: 280px;
   min-width: 250px;
   max-width: 320px;
@@ -708,6 +708,4 @@ body.dark .ai-suggestion p {
     display: none;
   }
 }
-
-
-</style>
+</style> -->
