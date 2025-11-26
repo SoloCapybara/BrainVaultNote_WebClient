@@ -2,7 +2,7 @@
   <div 
     class="container" 
     :class="{ 'sidebar-collapsed': sidebarCollapsed }"
-    :style="{
+    :style="isMobile ? {} : {
       marginLeft: sidebarCollapsed ? '90px' : '260px',
       width: sidebarCollapsed ? 'calc(100vw - 90px)' : 'calc(100vw - 260px)'
     }"
@@ -102,6 +102,10 @@ import NotesList from '@/components/notelist/NotesList.vue'
 import NoteEditor from '@/components/noteeditor/NoteEditor.vue'
 import AIAssistant from '@/components/aiassistant/AIAssistant.vue'
 import { useThemeFinal } from '@/composables/useThemeFinal'
+// 导入模块化样式
+import './css/main-layout.css'
+import './css/toggle-buttons.css'
+import './css/responsive.css'
 
 // 主题管理
 const { isDark, toggleTheme: toggleThemeGlobal } = useThemeFinal()
@@ -121,13 +125,19 @@ const toggleGlobalTheme = () => {
 // 不再需要同步编辑区域主题，因为现在Switch和模态框都使用全局主题
 
 // 响应式状态
-const sidebarCollapsed = ref(false)
-const showMobileSidebar = ref(false)
-const showAIAssistant = ref(false)
-const activeNote = ref<any>(null)
+const sidebarCollapsed = ref(false) //侧边栏折叠状态
+const showMobileSidebar = ref(false) //移动端侧边栏显示状态
+const showAIAssistant = ref(false) //AI助手显示状态
+const activeNote = ref<any>(null) //选中的笔记
 const notesListCollapsed = ref(false) // 笔记列表折叠状态
 const aiAssistantCollapsed = ref(false) // AI助手折叠状态
 const windowWidth = ref(window.innerWidth) // 窗口宽度
+
+//添加移动端检测
+const isMobile = computed(()=>{
+  if(typeof window === 'undefined') return false;
+  return window.innerWidth < 768;
+})
 
 // 计算属性：判断是否是中屏模式
 const isMidScreen = computed(() => {
@@ -154,6 +164,7 @@ const loadSidebarState = () => {
   }
 }
 
+//保存侧边栏状态
 const saveSidebarState = () => {
   localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value.toString())
 }
@@ -171,10 +182,12 @@ const loadCollapsedStates = () => {
   }
 }
 
+//保存笔记栏状态
 const saveNotesListState = () => {
   localStorage.setItem('notesListCollapsed', notesListCollapsed.value.toString())
 }
 
+//保存AI助手栏状态
 const saveAIAssistantState = () => {
   localStorage.setItem('aiAssistantCollapsed', aiAssistantCollapsed.value.toString())
 }
@@ -913,6 +926,8 @@ const handleResize = () => {
 
 // 初始化
 onMounted(() => {
+  window.addEventListener('resize', handleResize)
+
   // 加载侧边栏状态
   loadSidebarState()
   
@@ -943,273 +958,5 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.container {
-  display: flex;
-  min-height: 100vh;
-  width: calc(100vw - 260px);
-  max-width: none !important;
-  background-color: #ffffff !important;
-  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  margin-left: 260px !important; /* 为固定侧边栏留出空间 */
-  box-sizing: border-box;
-  position: relative; /* 确保定位正确 */
-}
 
-body.dark .container {
-  background-color: var(--color-bg-secondary);
-}
-
-/* 侧边栏收缩时的布局调整 */
-.container.sidebar-collapsed {
-  width: calc(100vw - 90px) !important;
-  margin-left: 90px !important;
-}
-
-/* 确保侧边栏收起时样式正确应用 */
-.container.sidebar-collapsed .main-content {
-
-  width: 100%;
-}
-
-/* 移动端布局 */
-@media (max-width: 768px) {
-  .container {
-    width: 100vw;
-    margin-left: 0;
-  }
-  
-  .container.sidebar-collapsed {
-    width: 100vw;
-    margin-left: 0;
-  }
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: var(--transition);
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  position: relative; /* 确保定位正确 */
-}
-
-.content-area {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  transition: var(--transition);
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  position: relative; /* 为箭头按钮定位做准备 */
-}
-
-/* 折叠/展开箭头按钮 - 位于笔记列表外部，只在宽屏和中屏显示 */
-.notes-collapse-toggle-btn {
-  display: none; /* 默认隐藏，只在宽屏和中屏显示 */
-  position: absolute;
-  left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px; /* 增大按钮尺寸 */
-  height: 44px;
-  background: none; /* 移除背景 */
-  border: none; /* 移除边框 */
-  box-shadow: none; /* 移除阴影 */
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  color: var(--color-text-primary);
-  font-size: 18px; /* 增大箭头图标 */
-}
-
-.notes-collapse-toggle-btn:hover {
-  color: var(--primary-color); /* hover时改变箭头颜色 */
-  transform: translateY(-50%) scale(1.2); /* 放大箭头 */
-}
-
-.notes-collapse-toggle-btn:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-/* 折叠状态下的箭头按钮位置调整 */
-.notes-collapse-toggle-btn.collapsed {
-  left: -15px; /* 笔记列表折叠后，按钮向左移动，避免遮挡文字开头 */
-}
-
-body.dark .notes-collapse-toggle-btn {
-  color: var(--color-text-primary);
-}
-
-body.dark .notes-collapse-toggle-btn:hover {
-  color: var(--primary-color); /* hover时改变箭头颜色 */
-}
-
-/* AI助手折叠/展开箭头按钮 - 位于AI栏左侧，只在宽屏显示 */
-.ai-collapse-toggle-btn {
-  display: none; /* 默认隐藏，只在宽屏显示 */
-  position: absolute;
-  right: 280px; /* 位于AI栏左边框上（AI栏宽度280px） */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  background: none; /* 移除背景 */
-  border: none; /* 移除边框 */
-  box-shadow: none; /* 移除阴影 */
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  color: var(--color-text-primary);
-  font-size: 18px;
-}
-
-.ai-collapse-toggle-btn:hover {
-  color: var(--primary-color); /* hover时改变箭头颜色 */
-  transform: translateY(-50%) scale(1.2); /* 放大箭头 */
-}
-
-.ai-collapse-toggle-btn:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-/* 折叠状态下的AI箭头按钮位置调整 */
-.ai-collapse-toggle-btn.collapsed {
-  right: 0px; /* AI栏折叠后，按钮移到右侧边缘，避免遮挡文字 */
-}
-
-body.dark .ai-collapse-toggle-btn {
-  color: var(--color-text-primary);
-}
-
-body.dark .ai-collapse-toggle-btn:hover {
-  color: var(--primary-color); /* hover时改变箭头颜色 */
-}
-
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 99;
-}
-
-.sidebar-overlay.active {
-  display: block;
-}
-
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .content-area {
-    flex-wrap: wrap;
-  }
-}
-
-/* 中屏模式（769px - 1024px）：保持横向布局，显示两栏（笔记列表+编辑器 或 编辑器+AI栏） */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .content-area {
-    flex-direction: row;
-  }
-  
-  /* 中屏模式下：如果笔记列表展开且AI栏也展开，隐藏AI栏 */
-  .content-area.mid-screen .notes-list:not(.collapsed) ~ .ai-assistant:not(.collapsed) {
-    display: none !important;
-  }
-  
-  /* 中屏模式下：如果AI栏展开且笔记列表也展开，隐藏笔记列表 */
-  .content-area.mid-screen .ai-assistant:not(.collapsed) ~ .notes-list:not(.collapsed) {
-    display: none !important;
-  }
-  
-  /* 中屏模式下显示笔记列表箭头按钮 */
-  .notes-collapse-toggle-btn {
-    display: flex;
-    left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
-  }
-  
-  .notes-collapse-toggle-btn.collapsed {
-    left: -15px; /* 折叠后向左移动，避免遮挡文字开头 */
-  }
-  
-  /* 中屏模式下显示AI栏箭头按钮 */
-  .ai-collapse-toggle-btn {
-    display: flex;
-    right: 240px; /* 位于AI栏左边框附近，更靠近AI栏 */
-  }
-  
-  .ai-collapse-toggle-btn.collapsed {
-    right: 0px; /* AI栏折叠后，按钮移到右侧边缘，避免遮挡文字 */
-  }
-  
-  /* 中屏模式下，如果笔记列表收起，确保AI栏显示 */
-  .content-area.mid-screen .notes-list.collapsed ~ .ai-assistant {
-    display: flex !important;
-  }
-  
-  /* 中屏模式下，如果AI栏收起，确保笔记列表显示 */
-  .content-area.mid-screen .ai-assistant.collapsed ~ .notes-list {
-    display: flex !important;
-  }
-}
-
-/* 宽屏模式（>1024px）：显示箭头按钮 */
-@media (min-width: 1025px) {
-  .notes-collapse-toggle-btn {
-    display: flex;
-    left: 320px; /* 位于笔记列表右侧，向左移动避免遮挡文字 */
-  }
-  
-  .notes-collapse-toggle-btn.collapsed {
-    left: -15px; /* 折叠后向左移动，避免遮挡文字开头 */
-  }
-  
-  /* AI助手折叠按钮只在宽屏显示 */
-  .ai-collapse-toggle-btn {
-    display: flex;
-    right: 280px; /* 位于AI栏左边框上（AI栏宽度280px） */
-  }
-  
-  .ai-collapse-toggle-btn.collapsed {
-    right: 0px; /* AI栏折叠后，按钮移到右侧边缘，避免遮挡文字 */
-  }
-}
-
-/* 窄屏模式（≤768px）：垂直布局，只显示笔记列表 */
-@media (max-width: 768px) {
-  .content-area {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  /* 窄屏模式下，笔记列表占据全部宽度 */
-  .content-area > :not(.notes-list) {
-    display: none !important;
-  }
-  
-  .content-area .notes-list {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    flex: 1;
-  }
-  
-  /* 窄屏模式下隐藏箭头按钮 */
-  .notes-collapse-toggle-btn {
-    display: none !important;
-  }
-}
-</style>
 

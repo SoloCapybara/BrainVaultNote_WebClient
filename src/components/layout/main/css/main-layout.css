@@ -2,27 +2,39 @@
 .container {
   display: flex;
   min-height: 100vh;
-  width: 100vw;
+  width: calc(100vw - 260px);
   max-width: none;
   background-color: #ffffff;
-  margin-left: 0;
+  margin-left: 260px; /* 为固定侧边栏留出空间 */
   padding-left: 0;
   box-sizing: border-box;
-  position: relative;
   overflow-x: hidden;
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+              margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
 }
 
-/* 确保侧边栏在flex布局中正确显示 */
+/* 桌面端：确保侧边栏使用 fixed 定位，贴着浏览器左边 */
+/* 侧边栏的 fixed 定位由 sidebar.css 定义，这里确保不被覆盖 */
 .container .sidebar {
-  flex-shrink: 0;
-  /* 覆盖sidebar.css中的fixed定位 */
-  position: relative !important;
-  left: auto !important;
-  top: auto !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
 }
 
 body.dark .container {
   background-color: var(--color-bg-secondary);
+}
+
+/* 侧边栏收缩时的布局调整 */
+.container.sidebar-collapsed {
+  width: calc(100vw - 90px);
+  margin-left: 90px;
+}
+
+/* 确保侧边栏收起时样式正确应用 */
+.container.sidebar-collapsed .main-content {
+  width: 100%;
 }
 
 .main-content {
@@ -32,7 +44,10 @@ body.dark .container {
   overflow: hidden;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
+  position: relative;
+  transition: var(--transition, all 0.3s ease);
 }
 
 .content-area {
@@ -41,20 +56,17 @@ body.dark .container {
   overflow: hidden;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   position: relative;
   box-sizing: border-box;
+  transition: var(--transition, all 0.3s ease);
 }
 
 /* 确保内容区域在侧边栏折叠时扩展 */
 .container.sidebar-collapsed .content-area {
   width: 100%;
   flex: 1;
-}
-
-/* 当侧边栏折叠时，确保笔记列表和AI助手组件向左扩展 */
-.container.sidebar-collapsed .content-area {
-  transform: translateX(-170px); /* 260px - 90px = 170px */
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* 不需要 transform，因为 container 的 margin-left 已经调整了 */
 }
 
 /* 确保折叠按钮跟随移动，通过直接调整位置而不是transform */
@@ -98,34 +110,84 @@ body.dark .container {
   flex-direction: column;
 }
 
-/* 移动端布局 */
+/* 移动端布局 - 统一在一个媒体查询中 */
 @media (max-width: 768px) {
-  .container {
+  /* Container 占满整个屏幕，强制覆盖内联样式 */
+  .container,
+  .container[style] {
     width: 100vw !important;
     margin-left: 0 !important;
+    padding-left: 0 !important;
+    left: 0 !important;
   }
   
-  .container.sidebar-collapsed {
+  .container.sidebar-collapsed,
+  .container.sidebar-collapsed[style] {
     width: 100vw !important;
     margin-left: 0 !important;
+    padding-left: 0 !important;
+    left: 0 !important;
   }
   
+  /* 侧边栏：fixed 定位，不占用 flex 空间 */
+  /* 注意：侧边栏的具体样式由 sidebar.css 定义，这里只确保不占用布局空间 */
+  .container .sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    z-index: 1000;
+    margin: 0 !important;
+    padding: 0;
+    pointer-events: none;
+  }
+  
+  /* 确保 mobile-open 时侧边栏显示 */
+  .container .sidebar.mobile-open {
+    transform: translateX(0) !important;
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+    pointer-events: auto !important;
+  }
+
+  /* 主内容区域占满宽度，从最左边开始 */
   .main-content {
-    width: 100%;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    min-width: 0 !important;
+    left: 0 !important;
   }
   
   .content-area {
-    width: 100%;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    transform: none !important;
+    min-width: 0 !important;
+    left: 0 !important;
   }
   
-  /* 移动端侧边栏回到fixed定位 */
-  :deep(.sidebar) {
-    position: fixed !important;
-  }
-  
-  /* 移动端不应用transform调整 */
+  /* 禁用桌面端的 transform */
   .container.sidebar-collapsed .content-area {
-    transform: none;
+    transform: none !important;
+  }
+
+  /* 遮罩层 */
+  .sidebar-overlay {
+    z-index: 999;
+  }
+
+  /* 笔记列表占满宽度，从最左边开始 */
+  .content-area .notes-list {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    left: 0 !important;
   }
 }
 

@@ -15,7 +15,7 @@
             <i class="fas fa-times"></i>
           </button>
         </div>
-        
+        <div class="modal-body">
         <!-- 主题模式切换 -->
         <div class="theme-mode-section">
           <h4>主题模式</h4>
@@ -76,6 +76,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </Teleport>
@@ -117,7 +118,10 @@ const themeColors = THEME_COLORS
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: opacity 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+              visibility 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .color-picker-modal.active {
@@ -128,15 +132,19 @@ const themeColors = THEME_COLORS
 .modal-content {
   background: white;
   border-radius: 12px;
-  width: 90%;
+  width: 100%;
   max-width: 500px;
+  max-height: 90vh;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  transform: scale(0.9);
+  transform: scale(0.92);
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .color-picker-modal.active .modal-content {
@@ -176,9 +184,15 @@ const themeColors = THEME_COLORS
   color: #333;
 }
 
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
 .theme-mode-section,
 .theme-color-section {
-  padding: 16px 20px;
+  margin-bottom: 16px;
 }
 
 .theme-mode-section h4,
@@ -288,12 +302,14 @@ const themeColors = THEME_COLORS
 
 .color-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  justify-items: center;
 }
 
 .color-option-modal {
-  aspect-ratio: 1;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -302,9 +318,7 @@ const themeColors = THEME_COLORS
   justify-content: center;
   position: relative;
   transition: all 0.3s;
-  border: 3px solid transparent;
-  min-width: 44px;
-  min-height: 44px;
+  border: 2px solid transparent;
 }
 
 .color-option-modal:hover {
@@ -388,27 +402,59 @@ body.dark .mode-info {
 }
 
 @media (max-width: 768px) {
+  .modal-content {
+    border-radius: 10px;
+    padding: 0;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-body {
+    padding: 12px 16px 18px;
+  }
+
+  .theme-mode-section,
+  .theme-color-section {
+    margin-bottom: 14px;
+  }
+
   .color-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
   }
-  
-  .theme-mode-section h4,
-  .theme-color-section h4 {
-    font-size: 13px;
-  }
-  
-  .theme-tip {
-    font-size: 10px;
-    padding: 5px 8px;
-  }
-  
+
   .theme-mode-option {
     padding: 10px;
   }
-  
+
+  .mode-preview {
+    height: 48px;
+  }
+
+  .preview-window {
+    width: 44px;
+    height: 32px;
+  }
+
+  .mode-info {
+    font-size: 12px;
+  }
+
   .color-option-modal {
-    min-width: 36px;
-    min-height: 36px;
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+  }
+
+  .color-option-modal i {
+    font-size: 11px;
+    margin-bottom: 0;
+  }
+
+  .color-name {
+    font-size: 8px;
   }
 }
 </style>

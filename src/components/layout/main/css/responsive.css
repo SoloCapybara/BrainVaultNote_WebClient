@@ -43,13 +43,13 @@
   
   /* 窄屏模式下，笔记列表占据全部宽度 */
   .content-area > :not(.notes-list) {
-    display: none !important;
+    display: none;
   }
   
   .content-area .notes-list {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
     flex: 1;
   }
 }

@@ -13,7 +13,7 @@
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  z-index: 200; /* 提高z-index确保按钮在最上层 */
+  z-index: 201; /* 提高z-index，确保在侧边栏(z-index: 100)之上 */
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   color: var(--color-text-primary);
   font-size: 18px;
@@ -43,23 +43,15 @@
 /* AI助手折叠按钮 */
 .ai-collapse-toggle-btn {
   right: 280px;
-  z-index: 200; /* 统一使用z-index: 200确保按钮在最上层 */
+  z-index: 201; /* 提高z-index，确保在侧边栏(z-index: 100)之上 */
 }
 
 .ai-collapse-toggle-btn.collapsed {
   right: 0px;
 }
 
-/* 侧边栏折叠且AI助手也折叠时的位置 */
-.container.sidebar-collapsed .ai-collapse-toggle-btn.collapsed {
-  right: calc(0px - 170px); /* 0px - 170px = -170px */
-}
-
-/* 确保按钮在侧边栏折叠状态下的点击区域 */
-.container.sidebar-collapsed .ai-collapse-toggle-btn {
-  /* 不使用transform，而是直接调整位置 */
-  right: calc(280px - 170px); /* 280px - 170px = 110px */
-}
+/* 侧边栏折叠时，AI按钮位置不需要调整 */
+/* 因为 container 的 margin-left 已经调整了，按钮会跟随移动 */
 
 body.dark .notes-collapse-toggle-btn,
 body.dark .ai-collapse-toggle-btn {
@@ -91,15 +83,8 @@ body.dark .ai-collapse-toggle-btn:hover {
     right: 0px;
   }
   
-  /* 侧边栏折叠时，宽屏模式下的AI按钮位置 */
-  .container.sidebar-collapsed .ai-collapse-toggle-btn {
-    right: calc(280px - 170px); /* 280px - 170px = 110px */
-  }
-  
-  /* 侧边栏折叠且AI助手也折叠时的位置 */
-  .container.sidebar-collapsed .ai-collapse-toggle-btn.collapsed {
-    right: calc(0px - 170px); /* 0px - 170px = -170px */
-  }
+  /* 侧边栏折叠时，AI按钮位置不需要调整 */
+  /* 因为 container 的 margin-left 已经调整了，按钮会跟随移动 */
 }
 
 /* 中屏模式（769px - 1024px） */
@@ -116,7 +101,7 @@ body.dark .ai-collapse-toggle-btn:hover {
   .ai-collapse-toggle-btn {
     display: flex !important;
     right: 240px;
-    z-index: 200; /* 统一使用z-index: 200确保按钮在最上层 */
+    z-index: 201; /* 提高z-index，确保在侧边栏(z-index: 100)之上 */
     pointer-events: auto !important; /* 确保按钮可点击 */
   }
   
@@ -124,16 +109,8 @@ body.dark .ai-collapse-toggle-btn:hover {
     right: 0px !important; /* 使用!important确保样式覆盖其他规则 */
   }
   
-  /* 侧边栏折叠时，中屏模式下的AI按钮位置 */
-  .container.sidebar-collapsed .ai-collapse-toggle-btn {
-    right: calc(240px - 170px); /* 240px - 170px = 70px */
-    pointer-events: auto !important; /* 确保按钮可点击 */
-  }
-  
-  /* 侧边栏折叠且AI助手也折叠时的位置 */
-  .container.sidebar-collapsed .ai-collapse-toggle-btn.collapsed {
-    right: calc(0px - 170px); /* 0px - 170px = -170px */
-  }
+  /* 侧边栏折叠时，AI按钮位置不需要调整 */
+  /* 因为 container 的 margin-left 已经调整了，按钮会跟随移动 */
 }
 
 /* 窄屏模式（≤768px）：隐藏箭头按钮 */
