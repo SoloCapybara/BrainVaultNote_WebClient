@@ -367,6 +367,10 @@ const {
   border-radius: 4px;
   transition: all 0.2s;
   font-size: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .toolbar-btn:hover:not(:disabled) {
@@ -389,6 +393,17 @@ const {
   gap: 4px;
   padding: 0 8px;
   width: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.toolbar-btn-group span {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .toolbar-divider {

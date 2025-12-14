@@ -176,6 +176,10 @@ onUnmounted(() => {
   overflow-x: hidden;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* 自定义滚动条样式 */

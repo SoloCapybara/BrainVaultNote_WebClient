@@ -201,6 +201,23 @@ body.dark .ProseMirror::-moz-selection {
   color: #ffffff !important;
 }
 
+/* Tab节点样式 */
+.tab-node {
+  display: inline-block;
+  width: 8ch;
+  min-width: 8ch;
+  max-width: 8ch;
+  font-family: 'Courier New', monospace;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  pointer-events: auto;
+  vertical-align: baseline;
+  cursor: text;
+  white-space: pre;
+}
+
 /* 全局动画 */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }

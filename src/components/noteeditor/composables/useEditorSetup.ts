@@ -14,6 +14,8 @@ import TextAlign from '@tiptap/extension-text-align'
 import { GradientText } from '../../../extensions/GradientText'
 import { FontSize } from '../../../extensions/FontSize'
 import { CollapsibleHeading } from '../../../extensions/CollapsibleHeading'
+import { Indent } from '../../../extensions/Indent'
+import { Tab } from '../../../extensions/Tab'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import type { Ref } from 'vue'
 import type { Editor as TiptapEditor } from '@tiptap/vue-3'
@@ -24,7 +26,7 @@ export function useEditorSetup(
   isMarkdownMode: Ref<boolean>,
   markdownSource: Ref<string>,
   turndownService: any,
-    callbacks: {
+  callbacks: {
     onUpdate?: (editorInstance: TiptapEditor) => void
     onSelectionUpdate?: (editorInstance: TiptapEditor) => void
     handleKeyDown?: (view: any, event: KeyboardEvent) => boolean | void
@@ -57,6 +59,8 @@ export function useEditorSetup(
       GradientText, //渐变文本(扩展自定义)
       FontSize, //字体大小(扩展自定义)
       CollapsibleHeading, //可折叠标题(扩展自定义)
+      Indent, //缩进工具(扩展自定义)
+      Tab, //Tab节点(扩展自定义，用于非行首位置插入Tab字符)
       HorizontalRule, //水平线
       Image.configure({
         inline: true, //是否内联

@@ -35,6 +35,10 @@ const handleClick = () => {
   color: var(--color-text-primary);
   border-bottom: 1px solid transparent;
   position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .dropdown-item:last-child {
@@ -74,6 +78,17 @@ body.dark .dropdown-item:hover {
   font-size: 18px;
   color: var(--primary-color);
   flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.dropdown-item span {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .menu-item-title {
@@ -82,6 +97,10 @@ body.dark .dropdown-item:hover {
   color: var(--color-text-primary);
   line-height: 1.4;
   flex: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* 字体大小选择器的紧凑样式 */

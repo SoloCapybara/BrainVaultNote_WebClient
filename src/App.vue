@@ -121,7 +121,7 @@ body:not(.dark) .main-content .note-item.active .note-preview {
 
 /* 选中笔记内的文字颜色 - 深色模式 */
 body.dark .main-content .note-item.active .note-title span:first-child {
-  color: #ffffff;
+  color: rgba(255, 255, 255, 1);
 }
 
 body.dark .main-content .note-item.active .note-meta {
