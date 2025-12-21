@@ -203,19 +203,30 @@ body.dark .ProseMirror::-moz-selection {
 
 /* Tab节点样式 */
 .tab-node {
-  display: inline-block;
-  width: 8ch;
-  min-width: 8ch;
-  max-width: 8ch;
+  /* 使用 inline 而不是 inline-block，避免光标定位问题 */
+  display: inline;
   font-family: 'Courier New', monospace;
   user-select: text;
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
   pointer-events: auto;
-  vertical-align: baseline;
   cursor: text;
   white-space: pre;
+}
+
+/* ProseMirror 编辑器基础样式 - 确保文本流正常 */
+.ProseMirror {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.ProseMirror p {
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
 }
 
 /* 全局动画 */

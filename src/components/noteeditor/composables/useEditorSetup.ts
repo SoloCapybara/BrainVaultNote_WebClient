@@ -1,5 +1,6 @@
 import { useEditor, type Editor } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
+import { Extension } from '@tiptap/core'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
@@ -37,16 +38,83 @@ export function useEditorSetup(
     onCreate?:(editorInstance: TiptapEditor) => void
   }
 ) {
+  // 简单哈希函数（定义在外部，避免 this 上下文问题）
+  const simpleHash = (str: string): string => {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // 转换为 32 位整数
+    }
+    return hash.toString(36)
+  }
+
+  // 创建一个撤销拦截器扩展，防止撤销到初始加载状态
+  const UndoInterceptorExtension = Extension.create({
+    name: 'undoInterceptor',
+
+    addStorage() {
+      return {
+        initialContentLength: 0, // 记录初始内容长度（快速检查）
+        initialContentHash: '', // 记录初始内容哈希（精确检查）
+      }
+    },
+
+    addCommands() {
+      return {
+        // 添加一个方法来设置初始内容
+        setInitialContent: (content: string) => ({ editor }) => {
+          this.storage.initialContentLength = content.length
+          this.storage.initialContentHash = simpleHash(content)
+          return true
+        }
+      }
+    },
+
+    addKeyboardShortcuts() {
+      return {
+        // 拦截 Ctrl+Z / Cmd+Z
+        'Mod-z': () => {
+          const { state } = this.editor
+
+          // 快速检查：长度不同，肯定不是初始状态，允许撤销
+          const currentLength = state.doc.textContent.length
+          if (currentLength !== this.storage.initialContentLength) {
+            // 执行原生的撤销命令
+            return this.editor.commands.undo()
+          }
+
+          // 长度相同，再做精确检查（哈希比较）
+          const currentContent = state.doc.textContent
+          const currentHash = simpleHash(currentContent)
+
+          if (currentHash === this.storage.initialContentHash) {
+            console.log('🛡️ 拦截撤销：已经回到初始状态')
+            return true // 阻止撤销
+          }
+
+          // 不是初始状态，允许撤销
+          return this.editor.commands.undo()
+        },
+      }
+    },
+  })
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
+        history: {
+          depth: 1000, // 大幅增加历史深度
+          newGroupDelay: 1000, // 增加到 1 秒
+        },
         underline:false, //false,关闭内置Underline
         link:false, //false,关闭内置Link
         horizontalRule:false, //false,关闭内置HorizontalRule
       }),
+      UndoInterceptorExtension, // 添加撤销拦截器
       Underline, //下划线
       TextStyle, //文本样式
       Color, //颜色

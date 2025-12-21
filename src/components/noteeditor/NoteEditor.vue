@@ -5,7 +5,7 @@
       @focus="isTitleFocused = true"
       @blur="isTitleFocused = false"
     />
-    
+
     <EditorToolbar
       :editor="getEditor()"
       :is-title-focused="isTitleFocused"
@@ -14,7 +14,7 @@
       :punctuation-count="contentPunctuationCount"
       :line-count="contentLineCount"
     />
-    
+
     <EditorContent
       v-if="(isEditorInitialized && getEditor()) || isMarkdownMode"
       :editor="getEditor()"
@@ -25,7 +25,7 @@
       @markdown-blur="handleMarkdownBlur"
       @context-menu="handleContextMenu"
     />
-    
+
     <ContextMenu
       :items="contextMenuItems"
       :visible="showContextMenu"
@@ -114,34 +114,28 @@ const initializeEditor = () => {
       onUpdate: (editorInstance) => {
         const html = editorInstance.getHTML()
         const previousContent = noteContent.value
-        
+
         // 检查内容是否真的改变了（而不是只是选择变化）
         const contentChanged = html !== previousContent
-        
+
         noteContent.value = html
-        
+
         if (!isMarkdownMode.value) {
           markdownSource.value = turndownService.turndown(html)
         }
-        
+
         const text = editorInstance.getText()
         updateWordCount(text, false, editorInstance)
         handleContentChange()
-        
+
         // 应用字体大小和颜色到新文本
         toolbar.applyFontSizeToNewText(editorInstance)
         colorPicker.applyTextColorToNewText(editorInstance)
-        
-        // 如果内容真的改变了，标记为用户已交互，并清除历史记录
-        // 如果只是选择变化（比如点击文本），不应该标记为交互
+
+        // 如果内容真的改变了，标记为用户已交互
+        // 通过较大的 newGroupDelay (1000ms)，加载操作和用户编辑会自然分组
         if (contentChanged && !hasUserInteracted.value) {
           hasUserInteracted.value = true
-          // 用户真正编辑了内容，清除历史记录（包括初始加载）
-          nextTick(() => {
-            if (editorInstance.commands) {
-              ;(editorInstance.commands as any).clearHistory?.()
-            }
-          })
         }
       },
       onSelectionUpdate: (editorInstance) => {
@@ -149,7 +143,7 @@ const initializeEditor = () => {
         toolbar.updateFontSizeFromSelection(editorInstance)
         toolbar.updateHeadingFromSelection(editorInstance)
         toolbar.updateTextAlignFromSelection(editorInstance)
-        
+
         // 注意：onSelectionUpdate 不应该清除历史记录
         // 因为点击文本只是选择变化，不应该被记录为可撤销操作
         // 只有在 onUpdate 中检测到内容真正改变时，才标记为用户交互
@@ -158,16 +152,9 @@ const initializeEditor = () => {
         isEditorInitialized.value = true
         editorRef.value = editorInstance
         console.log('编辑器初始化完成', editorInstance)
-        
-        // 先清除历史记录，确保初始状态是干净的
-        nextTick(() => {
-          if (editorInstance.commands) {
-            ;(editorInstance.commands as any).clearHistory?.()
-          }
-        })
-        
+
         loadNoteToEditor(unref(resolvedNote.value))
-        
+
         // 设置Tab区域选择事件监听器
         nextTick(() => {
           if (editorInstance.view) {
@@ -182,7 +169,7 @@ const initializeEditor = () => {
       handleDOMEvents: keyboard.createHandleDOMEvents()
     }
   )
-  
+
   editorRef.value = editorInstance
 }
 
@@ -198,7 +185,7 @@ const currentNote = computed(() => {
     title: noteTitle.value,
     wordCount: contentWordCount.value
   }
-  
+
   if (noteType === 'markdown') {
     return {
       ...baseNote,
@@ -215,6 +202,15 @@ const currentNote = computed(() => {
 })
 
 // 方法
+// 清除编辑器历史记录的辅助函数
+// 注意：由于 ProseMirror history 插件的内部实现限制，
+// 任何尝试清空历史的操作都会破坏插件状态，导致后续输入报错
+// 因此这个函数保持为空实现
+const clearEditorHistory = (editor: any, logPrefix = '') => {
+  // 不执行任何操作
+  return true
+}
+
 const handleSave = () => {
   emit('save', currentNote.value)
   try {
@@ -261,20 +257,29 @@ const handleEditorClick = (event: MouseEvent) => {
   const editor = getEditor()
   if (!editor) return
 
+  console.log('🖱️ 编辑器被点击')
+  console.log('  - 当前内容长度:', editor.getText().length)
+  console.log('  - 当前光标位置:', editor.state.selection.$anchor.pos)
+
+  // 打印撤销栈状态
+  const state = editor.state
+  console.log('  - 撤销栈 done 步骤:', state.history$?.prevRanges?.length || 0)
+  console.log('  - 撤销栈 undone 步骤:', state.history$?.nextRanges?.length || 0)
+
   const target = event.target as HTMLElement
   const heading = target.closest('.collapsible-heading') as HTMLElement
-  
+
   if (!heading || !editorRef.value) return
-  
+
   const collapseIcon = target.closest('.heading-collapse-icon')
   if (!collapseIcon) return
-  
+
   event.preventDefault()
   event.stopPropagation()
-  
+
   const level = parseInt(heading.getAttribute('data-level') || '1')
   const isCollapsed = heading.getAttribute('data-collapsed') === 'true'
-  
+
   let found = false
   editorRef.value.state.doc.descendants((node, pos) => {
     if (found) return false
@@ -282,7 +287,7 @@ const handleEditorClick = (event: MouseEvent) => {
       const nodeStart = pos
       const nodeEnd = pos + node.nodeSize
       const clickPos = editorRef.value?.state.selection.from || 0
-      
+
       if (clickPos >= nodeStart && clickPos <= nodeEnd) {
         found = true
         editorRef.value?.chain().focus().command(({ tr }) => {
@@ -305,12 +310,12 @@ const calculateVisibleLineCount = () => {
     const paddingTop = parseFloat(styles.paddingTop) || 0
     const paddingBottom = parseFloat(styles.paddingBottom) || 0
     const contentHeight = textarea.scrollHeight - paddingTop - paddingBottom
-    
+
     if (contentHeight <= 0) {
       contentLineCount.value = 1
       return
     }
-    
+
     const lines = Math.max(1, Math.round(contentHeight / lineHeight))
     contentLineCount.value = lines
   } else {
@@ -330,13 +335,13 @@ const calculateVisibleLineCount = () => {
         contentLineCount.value = 1
         return
       }
-    
+
       const lines = Math.max(1, Math.round(contentHeight / lineHeight))
       contentLineCount.value = lines
     }else {
       contentLineCount.value = 1
     }
-  } 
+  }
 }
 
 // ResizeObserver
@@ -356,7 +361,7 @@ const setupResizeObserver = () => {
     resizeObserver.disconnect()
     resizeObserver = null
   }
-  
+
   nextTick(() => {
     resizeObserver = new ResizeObserver(() => {
       // 使用防抖，避免频繁计算
@@ -365,7 +370,7 @@ const setupResizeObserver = () => {
         calculateVisibleLineCount()
       }, 100)
     })
-    
+
     if (isMarkdownMode.value && markdownTextareaRef.value) {
       // Markdown 模式：监听 textarea
       resizeObserver.observe(markdownTextareaRef.value)
@@ -382,13 +387,13 @@ const setupResizeObserver = () => {
         }
       }
     }
-    
+
     // 监听编辑器容器，当侧边栏或AI栏展开/收缩时，容器宽度会改变
     const editorContainer = document.querySelector('.note-editor') as HTMLElement
     if (editorContainer) {
       resizeObserver.observe(editorContainer)
     }
-    
+
     // 监听 content-area 容器，当侧边栏或AI栏展开/收缩时会改变尺寸
     const contentArea = document.querySelector('.content-area') as HTMLElement
     if (contentArea) {
@@ -404,7 +409,7 @@ const setupWindowResizeListener = () => {
     window.removeEventListener('resize', windowResizeHandler)
     windowResizeHandler = null
   }
-  
+
   windowResizeHandler = () => {
     // 使用防抖，避免频繁计算
     clearTimeout((windowResizeHandler as any).timeoutId)
@@ -412,7 +417,7 @@ const setupWindowResizeListener = () => {
       calculateVisibleLineCount()
     }, 150)
   }
-  
+
   window.addEventListener('resize', windowResizeHandler)
 }
 
@@ -432,9 +437,6 @@ const resetEditorState = () => {
   const editor = getEditor()
   if (editor && editor.commands) {
     editor.commands.setContent('')
-    // 清除历史记录，避免重置被记录为可撤销操作
-    // clearHistory命令存在但类型定义可能不完整
-    ;(editor.commands as any).clearHistory?.()
   }
 }
 
@@ -444,7 +446,7 @@ const loadNoteToEditor = (targetNote = resolvedNote.value) => {
   console.log("加载笔记到编辑器", targetNote)
   // 重置用户交互标志，因为加载新笔记后，用户交互状态应该重置
   hasUserInteracted.value = false
-  
+
   // 如果笔记对象为空，则重置编辑器状态
   if (!targetNote) {
     resetEditorState()
@@ -473,12 +475,11 @@ const loadNoteToEditor = (targetNote = resolvedNote.value) => {
     if(editor && editor.commands){
       // 设置内容
       editor.commands.setContent(htmlContent)
-      // 清除历史记录，避免初始加载被记录为可撤销操作
-      // 使用 nextTick 确保在内容设置完成后再清除历史记录
+
+      // 记录初始内容，用于撤销拦截
       nextTick(() => {
-        if (editor.commands) {
-          ;(editor.commands as any).clearHistory?.()
-        }
+        const textContent = editor.getText()
+        ;(editor.commands as any).setInitialContent?.(textContent)
       })
     }
     markdownSource.value = turndownService.turndown(htmlContent)
@@ -499,26 +500,12 @@ const loadNoteToEditor = (targetNote = resolvedNote.value) => {
       noteContent.value = html
       // 设置内容
       editor.commands.setContent(html)
-      // 清除历史记录，避免初始加载被记录为可撤销操作
-      // 使用 nextTick 确保在内容设置完成后再清除历史记录
-      nextTick(() => {
-        if (editor.commands) {
-          ;(editor.commands as any).clearHistory?.()
-        }
-      })
       markdownSource.value = content
     } else {
       noteContent.value = ''
       markdownSource.value = ''
       // 设置内容
       editor.commands.setContent('')
-      // 清除历史记录，避免初始加载被记录为可撤销操作
-      // 使用 nextTick 确保在内容设置完成后再清除历史记录
-      nextTick(() => {
-        if (editor.commands) {
-          ;(editor.commands as any).clearHistory?.()
-        }
-      })
     }
   }
 
@@ -529,10 +516,10 @@ const loadNoteToEditor = (targetNote = resolvedNote.value) => {
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   document.addEventListener('keydown', handleKeyDown, true)
-  
+
   setupResizeObserver()
   setupWindowResizeListener()
-  
+
   // 使用 MutationObserver 监听 DOM 变化（侧边栏/AI栏展开/收缩时，容器的 class 会改变）
   mutationObserver = new MutationObserver((mutations) => {
     // 检查是否有 class 或 style 变化
@@ -543,7 +530,7 @@ onMounted(() => {
       }
       return false
     })
-    
+
     if (hasRelevantChange) {
       // 当 DOM 变化时，延迟计算行数（等待 CSS transition 完成，通常是 300ms）
       setTimeout(() => {
@@ -551,13 +538,13 @@ onMounted(() => {
       }, 350)
     }
   })
-  
+
   // 监听 container 容器的 class 变化（侧边栏折叠时，container 的 class 会改变）
   nextTick(() => {
     if (!mutationObserver) return
-    
+
     const observer = mutationObserver // 保存引用，避免 TypeScript 类型检查问题
-    
+
     const container = document.querySelector('.container')
     if (container && observer) {
       observer.observe(container, {
@@ -566,7 +553,7 @@ onMounted(() => {
         subtree: false
       })
     }
-    
+
     // 监听 content-area 容器的 class 和 style 变化
     const contentArea = document.querySelector('.content-area')
     if (contentArea && observer) {
@@ -576,7 +563,7 @@ onMounted(() => {
         subtree: false
       })
     }
-    
+
     // 监听笔记列表和AI助手的 class 变化（collapsed 状态）
     const notesList = document.querySelector('.notes-list')
     if (notesList && observer) {
@@ -586,7 +573,7 @@ onMounted(() => {
         subtree: false
       })
     }
-    
+
     const aiAssistant = document.querySelector('.ai-assistant')
     if (aiAssistant && observer) {
       observer.observe(aiAssistant, {
@@ -596,7 +583,7 @@ onMounted(() => {
       })
     }
   })
-  
+
   nextTick(() => {
     // 确保编辑器初始化完成后，如果有笔记数据，就加载到编辑器
     if (resolvedNote.value) {
@@ -613,12 +600,12 @@ onMounted(() => {
         }
       },100)
     }
-    
+
     const editorElement = document.querySelector('.tiptap-editor .ProseMirror') as HTMLElement
     if (editorElement) {
       editorElement.addEventListener('click', handleEditorClick)
     }
-    
+
     // 添加选中文本样式
     const style = document.createElement('style')
     style.id = 'tiptap-selection-override'
@@ -637,7 +624,7 @@ onMounted(() => {
         color: inherit !important;
         -webkit-text-fill-color: inherit !important;
       }
-      
+
       body.dark .tiptap-editor *::selection,
       body.dark .tiptap-editor::selection,
       body.dark .tiptap-content *::selection,
@@ -660,36 +647,36 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
   document.removeEventListener('keydown', handleKeyDown, { capture: true } as EventListenerOptions)
-  
+
   const editorElement = document.querySelector('.tiptap-editor .ProseMirror') as HTMLElement
   if (editorElement) {
     editorElement.removeEventListener('click', handleEditorClick)
   }
-  
+
   if (resizeObserver) {
     resizeObserver.disconnect()
     resizeObserver = null
   }
-  
+
   cleanupWindowResizeListener()
-  
+
   // 清理 MutationObserver
   if (mutationObserver) {
     mutationObserver.disconnect()
     mutationObserver = null
   }
-  
+
   // 清理Tab区域选择事件监听器
   if (selectionHandlersCleanup) {
     selectionHandlersCleanup()
     selectionHandlersCleanup = null
   }
-  
+
   const style = document.getElementById('tiptap-selection-override')
   if (style) {
     style.remove()
   }
-  
+
   if (editorRef.value) {
     editorRef.value.destroy()
   }

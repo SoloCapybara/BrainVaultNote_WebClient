@@ -61,16 +61,17 @@ export const Tab = Node.create<TabOptions>({
   },
 
   renderHTML({ HTMLAttributes }) {
-    // 使用 8ch 作为宽度，在等宽字体中应该等于 8 个字符宽度
-    // 添加一个零宽空格字符，使节点可以被选中
+    // 使用普通 inline 元素，避免 inline-block 导致的光标定位问题
+    // 使用 8 个不间断空格来模拟 Tab 宽度
     return [
       'span',
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         'data-type': 'tab',
         class: 'tab-node',
-        style: 'display: inline-block; width: 8ch; min-width: 8ch; max-width: 8ch; font-family: inherit;',
+        // 使用 inline 而不是 inline-block，确保文本流正常
+        style: 'white-space: pre;',
       }),
-      '\u200B', // 零宽空格，使节点可以被选中
+      '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0', // 8 个不间断空格
     ]
   },
 
