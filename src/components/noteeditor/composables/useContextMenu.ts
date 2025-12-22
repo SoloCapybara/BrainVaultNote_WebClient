@@ -14,10 +14,10 @@ export function useContextMenu(
 
   const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault()
-    
+
     const selection = window.getSelection()
     hasSelection.value = selection !== null && selection.toString().trim().length > 0
-    
+
     contextMenuX.value = event.clientX
     contextMenuY.value = event.clientY
     showContextMenu.value = true
@@ -25,7 +25,7 @@ export function useContextMenu(
 
   const contextMenuItems = computed<ContextMenuItem[]>(() => {
     const items: ContextMenuItem[] = []
-    
+
     if (hasSelection.value) {
       // 有选中文本时的菜单
       items.push(
@@ -59,9 +59,9 @@ export function useContextMenu(
                 if (textarea) {
                   const start = textarea.selectionStart
                   const end = textarea.selectionEnd
-                  markdownSource.value = 
-                    markdownSource.value.substring(0, start) + 
-                    text + 
+                  markdownSource.value =
+                    markdownSource.value.substring(0, start) +
+                    text +
                     markdownSource.value.substring(end)
                 }
               }
@@ -121,9 +121,9 @@ export function useContextMenu(
                 const textarea = document.querySelector('.markdown-source') as HTMLTextAreaElement
                 if (textarea) {
                   const start = textarea.selectionStart
-                  markdownSource.value = 
-                    markdownSource.value.substring(0, start) + 
-                    text + 
+                  markdownSource.value =
+                    markdownSource.value.substring(0, start) +
+                    text +
                     markdownSource.value.substring(start)
                 }
               }
@@ -150,7 +150,7 @@ export function useContextMenu(
         }
       )
     }
-    
+
     return items
   })
 

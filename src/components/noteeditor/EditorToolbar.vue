@@ -3,17 +3,17 @@
     <div class="toolbar-left">
       <!-- 第一组：撤销、重做 -->
       <Tooltip text="撤销" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :disabled="!editor || isTitleFocused || !editor.can().undo()"
-          @click="editor && editor.chain().focus().undo().run()"
+          @click="editor && (editor.chain().focus() as any).safeUndo().run()"
         >
           <i class="fas fa-undo"></i>
         </button>
       </Tooltip>
       <Tooltip text="重做" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :disabled="!editor || isTitleFocused || !editor.can().redo()"
           @click="editor && editor.chain().focus().redo().run()"
         >
@@ -22,11 +22,11 @@
       </Tooltip>
       <!-- 分割线 -->
       <div class="toolbar-divider"></div>
-      
+
       <!-- 第二组：字体大小、大纲工具 -->
       <Dropdown v-model="fontSizeDropdownOpen" @update:modelValue="handleFontSizeDropdownChange">
         <template #trigger>
-          <button 
+          <button
             class="toolbar-btn toolbar-btn-group"
             :disabled="isTitleFocused"
           >
@@ -34,8 +34,8 @@
             <i class="fas fa-chevron-down"></i>
           </button>
         </template>
-        <DropdownItem 
-          v-for="size in fontSizes" 
+        <DropdownItem
+          v-for="size in fontSizes"
           :key="size"
           :class="{ 'font-size-item': true, 'active': currentFontSize === size }"
           @click="setFontSize(size)"
@@ -45,7 +45,7 @@
       </Dropdown>
       <Dropdown v-model="headingDropdownOpen" @update:modelValue="handleHeadingDropdownChange">
         <template #trigger>
-          <button 
+          <button
             class="toolbar-btn toolbar-btn-group"
             :disabled="isTitleFocused"
           >
@@ -53,8 +53,8 @@
             <i class="fas fa-chevron-down"></i>
           </button>
         </template>
-        <DropdownItem 
-          v-for="heading in headings" 
+        <DropdownItem
+          v-for="heading in headings"
           :key="heading.value"
           :class="{ 'heading-item': true, 'active': currentHeading === heading.label }"
           @click="setHeading(heading.value)"
@@ -64,11 +64,11 @@
       </Dropdown>
       <!-- 分割线 -->
       <div class="toolbar-divider"></div>
-      
+
       <!-- 第三组：加粗、斜体、下划线、删除线 -->
       <Tooltip text="粗体" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('bold') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && editor.chain().focus().toggleBold().run()"
@@ -77,8 +77,8 @@
         </button>
       </Tooltip>
       <Tooltip text="斜体" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('italic') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && editor.chain().focus().toggleItalic().run()"
@@ -87,8 +87,8 @@
         </button>
       </Tooltip>
       <Tooltip text="下划线" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('underline') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && editor.chain().focus().toggleUnderline().run()"
@@ -97,8 +97,8 @@
         </button>
       </Tooltip>
       <Tooltip text="删除线" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('strike') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && editor.chain().focus().toggleStrike().run()"
@@ -108,7 +108,7 @@
       </Tooltip>
       <!-- 分割线 -->
       <div class="toolbar-divider"></div>
-      
+
       <!-- 第四组：文字颜色、背景颜色 -->
       <ColorPicker
         ref="textColorPickerRef"
@@ -142,11 +142,11 @@
       />
       <!-- 分割线 -->
       <div class="toolbar-divider"></div>
-      
+
       <!-- 第五组：有序列表、无序列表、对齐工具 -->
       <Tooltip text="无序列表" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('bulletList') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && editor.chain().focus().toggleBulletList().run()"
@@ -155,8 +155,8 @@
         </button>
       </Tooltip>
       <Tooltip text="有序列表" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('orderedList') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && editor.chain().focus().toggleOrderedList().run()"
@@ -166,7 +166,7 @@
       </Tooltip>
       <Dropdown v-model="textAlignDropdownOpen" @update:modelValue="handleTextAlignDropdownChange">
         <template #trigger>
-          <button 
+          <button
             class="toolbar-btn toolbar-btn-group"
             :disabled="isTitleFocused"
           >
@@ -174,8 +174,8 @@
             <i class="fas fa-chevron-down"></i>
           </button>
         </template>
-        <DropdownItem 
-          v-for="align in textAlignOptions" 
+        <DropdownItem
+          v-for="align in textAlignOptions"
           :key="align.value"
           :class="{ 'active': currentTextAlign === align.value }"
           @click="setTextAlign(align.value)"
@@ -186,11 +186,11 @@
       </Dropdown>
       <!-- 分割线 -->
       <div class="toolbar-divider"></div>
-      
+
       <!-- 第六组：链接、分割线 -->
       <Tooltip text="链接" placement="top">
-        <button 
-          class="toolbar-btn" 
+        <button
+          class="toolbar-btn"
           :class="{ active: editor?.isActive('link') }"
           :disabled="!editor || isTitleFocused"
           @click="editor && setLink()"
@@ -199,7 +199,7 @@
         </button>
       </Tooltip>
       <Tooltip text="分割线" placement="top">
-        <button 
+        <button
           class="toolbar-btn"
           :disabled="!editor || isTitleFocused"
           @click="editor && insertHorizontalRule()"
@@ -209,12 +209,12 @@
       </Tooltip>
       <!-- 分割线 -->
       <div class="toolbar-divider"></div>
-      
+
       <!-- 第七组：更多工具（图片、代码块、表格） -->
       <Dropdown v-model="moreToolsDropdownOpen">
         <template #trigger>
           <Tooltip text="更多工具" placement="top">
-            <button 
+            <button
               class="toolbar-btn"
               :disabled="isTitleFocused"
             >
@@ -226,7 +226,7 @@
           <i class="fas fa-image"></i>
           <span>图片</span>
         </DropdownItem>
-        <DropdownItem 
+        <DropdownItem
           :class="{ active: editor?.isActive('codeBlock') }"
           @click="handleMoreToolClick('code')"
         >
@@ -245,7 +245,7 @@
       :line-count="lineCount"
     />
   </div>
-  
+
   <!-- Markdown 类型：只显示统计 -->
   <div v-else class="editor-toolbar markdown-toolbar">
     <div class="toolbar-left"></div>

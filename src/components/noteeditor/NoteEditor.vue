@@ -263,8 +263,8 @@ const handleEditorClick = (event: MouseEvent) => {
 
   // 打印撤销栈状态
   const state = editor.state
-  console.log('  - 撤销栈 done 步骤:', state.history$?.prevRanges?.length || 0)
-  console.log('  - 撤销栈 undone 步骤:', state.history$?.nextRanges?.length || 0)
+  console.log('  - 撤销栈 done 步骤:', (state as any).history$?.prevRanges?.length || 0)
+  console.log('  - 撤销栈 undone 步骤:', (state as any).history$?.nextRanges?.length || 0)
 
   const target = event.target as HTMLElement
   const heading = target.closest('.collapsible-heading') as HTMLElement
