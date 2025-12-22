@@ -119,6 +119,8 @@ export function useKeyboard(editor: { value: Editor | null }, isTitleFocused: { 
             const tabStartPos = resolvedPos.start(resolvedPos.depth) + resolvedPos.parentOffset
             const tabEndPos = tabStartPos + nodeAtPos.nodeSize
             tr.delete(tabStartPos, tabEndPos)
+            // 标记为可撤销操作
+            tr.setMeta('addToHistory', true)
             view.dispatch(tr)
             return true
           }

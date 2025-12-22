@@ -41,45 +41,37 @@ export const UndoInterceptor = Extension.create({
 
   addStorage() {
     return {
-      initialContentLength: 0, // 记录初始内容长度（快速检查）
-      initialContentHash: '', // 记录初始内容哈希（精确检查）
+      initialContentHash: '', // 记录初始文档结构的哈希（包含节点、属性、样式等）
     }
   },
 
   addCommands() {
     return {
       // 设置初始内容
-      setInitialContent: (content: string) => () => {
-        this.storage.initialContentLength = content.length
-        this.storage.initialContentHash = simpleHash(content)
-        console.log('📝 设置初始内容哈希:', this.storage.initialContentHash, '长度:', content.length)
+      setInitialContent: (content: string) => ({ editor }: { editor: any }) => {
+        // 使用完整的文档 JSON 来计算哈希，包含所有节点、属性和样式
+        const docJSON = JSON.stringify(editor.state.doc.toJSON())
+        this.storage.initialContentHash = simpleHash(docJSON)
+        console.log('📝 设置初始内容哈希:', this.storage.initialContentHash, '文档长度:', docJSON.length)
         return true
       },
       // 安全撤销：带检查的撤销命令
       safeUndo: () => ({ state, commands }: { state: any; commands: any }) => {
-        const currentLength = state.doc.textContent.length
+        // 获取当前文档的完整 JSON 结构（包含所有节点、属性、样式）
+        const currentDocJSON = JSON.stringify(state.doc.toJSON())
+        const currentHash = simpleHash(currentDocJSON)
 
-        console.log('🔄 安全撤销 - 当前长度:', currentLength, '初始长度:', this.storage.initialContentLength)
-
-        // 快速检查：长度不同，肯定不是初始状态，允许撤销
-        if (currentLength !== this.storage.initialContentLength) {
-          console.log('✅ 允许撤销（长度不同）')
-          return commands.undo()
-        }
-
-        // 长度相同，再做精确检查（哈希比较）
-        const currentContent = state.doc.textContent
-        const currentHash = simpleHash(currentContent)
-
+        console.log('🔄 安全撤销 - 文档哈希:', currentHash)
         console.log('🔍 哈希对比 - 当前:', currentHash, '初始:', this.storage.initialContentHash)
 
+        // 精确检查：如果文档结构完全相同，说明回到初始状态
         if (currentHash === this.storage.initialContentHash) {
           console.log('🛡️ 拦截撤销：已经回到初始状态')
           return true // 阻止撤销，返回 true 表示命令已处理
         }
 
         // 不是初始状态，允许撤销
-        console.log('✅ 允许撤销（哈希不同）')
+        console.log('✅ 允许撤销（文档结构不同）')
         return commands.undo()
       }
     } as any

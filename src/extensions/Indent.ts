@@ -68,15 +68,15 @@ export const Indent = Extension.create<IndentOptions>({
               }
               // 尝试从style中解析缩进
               const style = element.getAttribute('style') || ''
-              
+
               // 检查是否有text-indent（首行缩进）
               const textIndentMatch = style.match(/text-indent:\s*([^;]+)/)
               const hasTextIndent = textIndentMatch && textIndentMatch[1]
-              
+
               // 检查是否有padding-left（整体缩进）
               const paddingMatch = style.match(/padding-left:\s*([^;]+)/)
               const hasPaddingLeft = paddingMatch && paddingMatch[1]
-              
+
               if (hasTextIndent && textIndentMatch?.[1]) {
                 const textIndent = textIndentMatch[1].trim()
                 const emMatch = textIndent.match(/([\d.]+)em/)
@@ -101,7 +101,7 @@ export const Indent = Extension.create<IndentOptions>({
                   }
                 }
               }
-              
+
               // 如果只有padding-left（没有text-indent），说明是textIndentOnly=true的状态
               if (hasPaddingLeft && !hasTextIndent && paddingMatch?.[1]) {
                 const padding = paddingMatch[1].trim()
@@ -116,7 +116,7 @@ export const Indent = Extension.create<IndentOptions>({
                   }
                 }
               }
-              
+
               // 向后兼容：只有padding-left（旧格式）
               if (hasPaddingLeft && paddingMatch?.[1]) {
                 const padding = paddingMatch[1].trim()
@@ -138,10 +138,10 @@ export const Indent = Extension.create<IndentOptions>({
               }
 
               const level = Math.max(this.options.minLevel, Math.min(this.options.maxLevel, attributes.indent))
-              
+
               // 检查是否有textIndentOnly标记（用于表示只有首行缩进，没有整体缩进）
               const textIndentOnly = attributes.textIndentOnly === true
-              
+
               // 第一级缩进使用首行缩进（text-indent），后续级别使用整体缩进（padding-left）
               if (level === 1) {
                 // 首行缩进：只有第一行有缩进
@@ -189,22 +189,22 @@ export const Indent = Extension.create<IndentOptions>({
         let depth = $from.depth
         let node = $from.node(depth)
         let nodeType = ''
-        
+
         // 向上查找，直到找到paragraph或heading
         while (depth >= 0) {
           node = $from.node(depth)
-          
+
           // 如果找到了paragraph或heading，使用它
           if (node && this.options.types.includes(node.type.name)) {
             nodeType = node.type.name
             break
           }
-          
+
           // 如果遇到doc节点，说明没有找到合适的块级节点
           if (node && node.type.name === 'doc') {
             return false
           }
-          
+
           depth--
           if (depth < 0) break
         }
@@ -251,22 +251,22 @@ export const Indent = Extension.create<IndentOptions>({
         let depth = $from.depth
         let node = $from.node(depth)
         let nodeType = ''
-        
+
         // 向上查找，直到找到paragraph或heading
         while (depth >= 0) {
           node = $from.node(depth)
-          
+
           // 如果找到了paragraph或heading，使用它
           if (node && this.options.types.includes(node.type.name)) {
             nodeType = node.type.name
             break
           }
-          
+
           // 如果遇到doc节点，说明没有找到合适的块级节点
           if (node && node.type.name === 'doc') {
             return false
           }
-          
+
           depth--
           if (depth < 0) break
         }
@@ -278,11 +278,7 @@ export const Indent = Extension.create<IndentOptions>({
 
         const currentIndent = (node.attrs.indent !== undefined ? node.attrs.indent : this.options.defaultLevel) as number
         const textIndentOnly = node.attrs.textIndentOnly === true
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/e6e3f5de-0c96-472f-80c0-183c21f85628',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Indent.ts:decreaseIndent:entry',message:'decreaseIndent called',data:{currentIndent,textIndentOnly},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        
+
         // 删除缩进的逻辑：
         // 1. 如果有首行缩进（!textIndentOnly），先删除首行缩进
         // 2. 如果没有首行缩进（textIndentOnly=true），把首行当作整体的一部分，一起减少一个缩进级别
@@ -290,9 +286,6 @@ export const Indent = Extension.create<IndentOptions>({
           if (!textIndentOnly) {
             // 当前有首行+整体缩进，先删除首行缩进，保留整体缩进（但不包含首行）
             // 设置textIndentOnly=true，表示只有整体缩进，没有首行缩进
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/e6e3f5de-0c96-472f-80c0-183c21f85628',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Indent.ts:decreaseIndent:branch1',message:'Deleting text indent, keeping padding',data:{currentIndent,newTextIndentOnly:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
             return chain()
               .updateAttributes(nodeType, { indent: currentIndent, textIndentOnly: true })
               .run()
@@ -303,9 +296,6 @@ export const Indent = Extension.create<IndentOptions>({
             const newIndent = Math.max(this.options.minLevel, currentIndent - 1)
             if (newIndent > 1) {
               // Level > 1：减少缩进级别，但保持 textIndentOnly=true（不恢复首行缩进）
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/e6e3f5de-0c96-472f-80c0-183c21f85628',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Indent.ts:decreaseIndent:branch2',message:'Deleting padding, keeping textIndentOnly=true',data:{currentIndent,newIndent,newTextIndentOnly:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-              // #endregion
               return chain()
                 .updateAttributes(nodeType, { indent: newIndent, textIndentOnly: true })
                 .run()
@@ -313,17 +303,11 @@ export const Indent = Extension.create<IndentOptions>({
               // 当从 Level 2（只有整体缩进）删除到 Level 1 时
               // 因为整体缩进应该包含首行，所以删除整体缩进时，应该直接变成 Level 0（无缩进）
               // 而不是先变成 Level 1（只有首行缩进），避免多删一次
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/e6e3f5de-0c96-472f-80c0-183c21f85628',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Indent.ts:decreaseIndent:branch3',message:'Deleting padding from level 2, going directly to level 0',data:{currentIndent,newIndent:0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-              // #endregion
               return chain()
                 .updateAttributes(nodeType, { indent: 0, textIndentOnly: false })
                 .run()
             } else {
               // 如果减少后是 level 0，直接变成无缩进
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/e6e3f5de-0c96-472f-80c0-183c21f85628',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Indent.ts:decreaseIndent:branch4',message:'Deleting to level 0',data:{currentIndent,newIndent:0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-              // #endregion
               return chain()
                 .updateAttributes(nodeType, { indent: 0, textIndentOnly: false })
                 .run()
@@ -331,9 +315,6 @@ export const Indent = Extension.create<IndentOptions>({
           }
         } else if (currentIndent === 1) {
           // 只有首行缩进（level 1），删除首行缩进，变成level 0
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/e6e3f5de-0c96-472f-80c0-183c21f85628',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Indent.ts:decreaseIndent:branch5',message:'Deleting level 1 text indent to level 0',data:{currentIndent:1},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
           return chain()
             .updateAttributes(nodeType, { indent: 0, textIndentOnly: false })
             .run()
@@ -352,22 +333,22 @@ export const Indent = Extension.create<IndentOptions>({
         let depth = $from.depth
         let node = $from.node(depth)
         let nodeType = ''
-        
+
         // 向上查找，直到找到paragraph或heading
         while (depth >= 0) {
           node = $from.node(depth)
-          
+
           // 如果找到了paragraph或heading，使用它
           if (node && this.options.types.includes(node.type.name)) {
             nodeType = node.type.name
             break
           }
-          
+
           // 如果遇到doc节点，说明没有找到合适的块级节点
           if (node && node.type.name === 'doc') {
             return false
           }
-          
+
           depth--
           if (depth < 0) break
         }
