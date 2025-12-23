@@ -13,6 +13,7 @@
       :word-count="contentWordCount"
       :punctuation-count="contentPunctuationCount"
       :line-count="contentLineCount"
+      :current-font-size="toolbar.currentFontSize"
     />
 
     <EditorContent

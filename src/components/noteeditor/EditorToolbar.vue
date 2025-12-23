@@ -30,14 +30,14 @@
             class="toolbar-btn toolbar-btn-group"
             :disabled="isTitleFocused"
           >
-            <span>{{ currentFontSize }}</span>
+            <span>{{ displayFontSize }}</span>
             <i class="fas fa-chevron-down"></i>
           </button>
         </template>
         <DropdownItem
           v-for="size in fontSizes"
           :key="size"
-          :class="{ 'font-size-item': true, 'active': currentFontSize === size }"
+          :class="{ 'font-size-item': true, 'active': (toolbar.currentFontSize as any) === size }"
           @click="setFontSize(size)"
         >
           {{ size }}
@@ -258,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRef, watch,type Ref} from 'vue'
+import { ref, toRef, watch, computed, type Ref} from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import Tooltip from '../ui/Tooltip.vue'
 import Dropdown from '../ui/Dropdown.vue'
@@ -275,22 +275,28 @@ const props = defineProps<{
   wordCount: number
   punctuationCount: number
   lineCount: number
+  currentFontSize: Ref<string>
 }>()
 
 // 使用 composables
 const editorRef = ref<Editor | null> (props.editor || null)
 const isTitleFocusedRef = toRef(props,'isTitleFocused')
+
+// 🔥 关键修复：不再创建新的 toolbar，直接使用从 NoteEditor 传来的值
+const toolbar = useToolbar(editorRef as Ref<Editor | null>, isTitleFocusedRef as Ref<boolean>)
+const colorPicker = useColorPicker(editorRef as Ref<Editor | null>, isTitleFocusedRef as Ref<boolean>)
+
+// 使用从父组件传来的 currentFontSize（这是唯一真实的数据源）
+const displayFontSize = computed(() => props.currentFontSize.value)
+
+// 监听 editor 变化
 watch(() => props.editor, (newEditor) => {
   editorRef.value = newEditor || null
 })
 
-const toolbar = useToolbar(editorRef as Ref<Editor | null>, isTitleFocusedRef as Ref<boolean>)
-const colorPicker = useColorPicker(editorRef as Ref<Editor | null>, isTitleFocusedRef as Ref<boolean>)
-
 // 暴露 toolbar 和 colorPicker 的方法和状态
 const {
   fontSizeDropdownOpen,
-  currentFontSize,
   fontSizes,
   setFontSize,
   handleFontSizeDropdownChange,

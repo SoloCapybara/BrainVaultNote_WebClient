@@ -59,7 +59,7 @@ export function useMarkdown() {
   // 同步 Markdown 到编辑器
   const syncMarkdownToEditor = (editor: Editor | null) => {
     if (!editor) return
-    
+
     const html = convertMarkdownToHTML(markdownSource.value)
     editor.commands.setContent(html)
   }

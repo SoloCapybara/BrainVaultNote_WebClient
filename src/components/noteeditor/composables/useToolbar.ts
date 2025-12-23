@@ -2,8 +2,6 @@ import { ref, computed, watch} from 'vue'
 import type { Ref } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 
-
-
 export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boolean>) {
   // 字体大小工具
   const fontSizeDropdownOpen = ref(false)
@@ -77,48 +75,93 @@ export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boole
   // 设置字体大小
   const setFontSize = (size: string) => {
     if (!editor.value || isTitleFocused.value) return
+
     fontSizeDropdownOpen.value = false
-    
+
     const fontSize = size.replace('px', '')
-    const { from, to } = editor.value.state.selection
-    
-    if (from === to) {
-      defaultFontSize.value = size
-      currentFontSize.value = size
-    } else {
-      editor.value.chain().focus().setFontSize(fontSize).run()
-      currentFontSize.value = size
-      defaultFontSize.value = size
-    }
+
+    // 无论是否有选中文本，都应用字体大小
+    // 这样会设置 storedMarks，影响后续输入的文字
+    editor.value.chain().focus().setFontSize(fontSize).run()
+
+    // 更新显示值和默认值
+    currentFontSize.value = size
+    defaultFontSize.value = size
   }
 
   // 从选中文本更新字体大小显示
   const updateFontSizeFromSelection = (editorInstance: Editor) => {
     if (!editorInstance) return
-    
-    const { selection } = editorInstance.state
+
+    const { selection, doc, storedMarks } = editorInstance.state
     const { from, to } = selection
-    
-    if (from === to) {
-      currentFontSize.value = defaultFontSize.value
-      return
+    let detectedFontSize: string | null = null
+
+    // 1. 优先检查 storedMarks（光标位置即将应用的样式）
+    if (storedMarks) {
+      for (const mark of storedMarks) {
+        if (mark.type.name === 'textStyle' && mark.attrs.fontSize) {
+          detectedFontSize = `${mark.attrs.fontSize}px`
+          break
+        }
+      }
     }
-    
-    const textStyle = editorInstance.getAttributes('textStyle')
-    if (textStyle && textStyle.fontSize) {
-      currentFontSize.value = `${textStyle.fontSize}px`
-    } else {
-      currentFontSize.value = defaultFontSize.value
+
+    // 2. 如果有选中文本，使用选区的样式
+    if (!detectedFontSize && from !== to) {
+      const textStyle = editorInstance.getAttributes('textStyle')
+      if (textStyle && textStyle.fontSize) {
+        detectedFontSize = `${textStyle.fontSize}px`
+      }
+    }
+
+    // 3. 如果是光标位置（没有选中），检查光标前一个字符的样式
+    if (!detectedFontSize && from === to) {
+      const resolvedPos = doc.resolve(from)
+      const nodeBefore = resolvedPos.nodeBefore
+
+      // 如果前面有节点，检查它的标记
+      if (nodeBefore && nodeBefore.marks && nodeBefore.marks.length > 0) {
+        for (const mark of nodeBefore.marks) {
+          if (mark.type.name === 'textStyle' && mark.attrs.fontSize) {
+            detectedFontSize = `${mark.attrs.fontSize}px`
+            break
+          }
+        }
+      }
+
+      // 如果光标在行首或前面没有字体样式，检查光标后一个字符
+      if (!detectedFontSize) {
+        const nodeAfter = resolvedPos.nodeAfter
+        if (nodeAfter && nodeAfter.marks && nodeAfter.marks.length > 0) {
+          for (const mark of nodeAfter.marks) {
+            if (mark.type.name === 'textStyle' && mark.attrs.fontSize) {
+              detectedFontSize = `${mark.attrs.fontSize}px`
+              break
+            }
+          }
+        }
+      }
+    }
+
+    // 4. 如果都没有找到，使用默认字体大小
+    if (!detectedFontSize) {
+      detectedFontSize = defaultFontSize.value
+    }
+
+    // 🎯 关键：像语雀一样，主动"切换"到检测到的字体大小，就像用户点击了一样
+    if (detectedFontSize !== currentFontSize.value) {
+      setFontSize(detectedFontSize)
     }
   }
 
   // 当输入新文字时，应用当前选择的字体大小
   const applyFontSizeToNewText = (editorInstance: Editor) => {
     if (!editorInstance || isTitleFocused.value) return
-    
+
     const textStyle = editorInstance.getAttributes('textStyle')
     const hasFontSize = textStyle && textStyle.fontSize
-    
+
     if (!hasFontSize && defaultFontSize.value !== '16px') {
       const fontSize = defaultFontSize.value.replace('px', '')
       editorInstance.chain().focus().setFontSize(fontSize).run()
@@ -130,7 +173,7 @@ export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boole
     if (!editor.value || isTitleFocused.value) return
     headingDropdownOpen.value = false
     fontSizeDropdownOpen.value = false
-    
+
     if (value === 'paragraph') {
       editor.value.chain().focus().setParagraph().run()
       currentHeading.value = '正文'
@@ -139,19 +182,19 @@ export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boole
       editor.value.chain().focus().setHeading({ level }).run()
       currentHeading.value = `标题 ${level}`
     }
-    
+
     updateHeadingFromSelection(editor.value)
   }
 
   // 从选中文本更新标题显示
   const updateHeadingFromSelection = (editorInstance: Editor) => {
     if (!editorInstance) return
-    
+
     const { selection } = editorInstance.state
     const { from } = selection
     const $from = editorInstance.state.doc.resolve(from)
     const node = $from.parent
-    
+
     if (node.type.name === 'collapsibleHeading') {
       const level = node.attrs.level
       currentHeading.value = `标题 ${level}`
@@ -219,7 +262,7 @@ export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boole
     updateFontSizeFromSelection,
     applyFontSizeToNewText,
     handleFontSizeDropdownChange,
-    
+
     // 标题
     headingDropdownOpen,
     currentHeading,
@@ -227,7 +270,7 @@ export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boole
     setHeading,
     updateHeadingFromSelection,
     handleHeadingDropdownChange,
-    
+
     // 文本对齐
     textAlignDropdownOpen,
     currentTextAlign,
@@ -236,14 +279,13 @@ export function useToolbar(editor: Ref<Editor | null>, isTitleFocused: Ref<boole
     setTextAlign,
     updateTextAlignFromSelection,
     handleTextAlignDropdownChange,
-    
+
     // 更多工具
     moreToolsDropdownOpen,
     handleMoreToolClick,
-    
+
     // 其他工具
     setLink,
     insertHorizontalRule
   }
 }
-
